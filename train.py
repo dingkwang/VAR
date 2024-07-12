@@ -9,6 +9,7 @@ import math
 
 import torch
 from torch.utils.data import DataLoader
+import wandb
 
 import dist
 from utils import arg_util, misc
@@ -29,15 +30,22 @@ def build_everything(args: arg_util.Args):
     auto_resume_info, start_ep, start_it, trainer_state, args_state = auto_resume(
         args, 'ar-ckpt*.pth')
     # create tensorboard logger
-    tb_lg: misc.TensorboardLogger
+    # tb_lg: misc.TensorboardLogger
     with_tb_lg = dist.is_master()
+    wandb.init(project="var", config=args)
     if with_tb_lg:
         os.makedirs(args.tb_log_dir_path, exist_ok=True)
         # noinspection PyTypeChecker
-        tb_lg = misc.DistLogger(misc.TensorboardLogger(
-            log_dir=args.tb_log_dir_path, filename_suffix=f'__{misc.time_str("%m%d_%H%M")}'),
-                                verbose=True)
-        tb_lg.flush()
+        # tb_lg = misc.DistLogger(misc.TensorboardLogger(
+        #     log_dir=args.tb_log_dir_path, filename_suffix=f'__{misc.time_str("%m%d_%H%M")}'),
+        #                         verbose=True)
+        # tb_lg.flush()
+
+        wandb.run.dir = args.tb_log_dir_path
+        wandb.run.notes = f"Run on {misc.time_str('%m%d_%H%M')}"
+        wandb.run.save()
+        wandb_log = wandb
+        tb_lg = misc.DistLogger(wandb_log)
     else:
         # noinspection PyTypeChecker
         tb_lg = misc.DistLogger(None, verbose=False)
@@ -50,60 +58,100 @@ def build_everything(args: arg_util.Args):
     # build data
     if not args.local_debug:
         print(f'[build PT data] ...\n')
-        num_classes, dataset_train, dataset_val = build_dataset(
-            args.data_path,
-            final_reso=args.data_load_reso,
-            hflip=args.hflip,
-            mid_reso=args.mid_reso,
-        )
-        types = str((type(dataset_train).__name__, type(dataset_val).__name__))
+        try:
+            train_dataset = CPDataset(args.data_path,
+                              256,
+                              mode="train",
+                              data_list=args.data_list)
+            ld_train = iter(
+            torch.utils.data.DataLoader(
+                train_dataset,
+                num_workers=1,
+                generator=args.get_different_generator_for_each_rank(),
+                pin_memory=True,
+                batch_sampler=DistInfiniteBatchSampler(
+                    dataset_len=len(train_dataset),
+                    glb_batch_size=args.glb_batch_size,
+                    same_seed_for_all_ranks=args.same_seed_for_all_ranks,
+                    shuffle=True,
+                    fill_last=True,
+                    rank=dist.get_rank(),
+                    world_size=dist.get_world_size(),
+                    start_ep=start_ep,
+                    start_it=start_it,
+                ),
+            ))
+            ld_dataset = CPDataset(args.data_pat,
+                                256,
+                                mode="train",
+                                data_list=args.data_list)
+            iters_train = math.ceil(len(train_dataset) / args.bs)
+            ld_val = torch.utils.data.DataLoader(
+                    ld_dataset,
+                    num_workers=0,
+                    batch_size=round(args.batch_size * 1.5),
+                    sampler=EvalDistributedSampler(ld_dataset,
+                                                num_replicas=dist.get_world_size(),
+                                                rank=dist.get_rank()),
+                    shuffle=False,
+                    drop_last=False,
+                )
+        except Exception as e:
+            print(e)
 
-        ld_val = DataLoader(
-            dataset_val,
-            num_workers=0,
-            pin_memory=True,
-            batch_size=round(args.batch_size * 1.5),
-            sampler=EvalDistributedSampler(dataset_val,
-                                           num_replicas=dist.get_world_size(),
-                                           rank=dist.get_rank()),
-            shuffle=False,
-            drop_last=False,
-        )
-        # del dataset_val
+            num_classes, dataset_train, dataset_val = build_dataset(
+                args.data_path,
+                final_reso=args.data_load_reso,
+                hflip=args.hflip,
+                mid_reso=args.mid_reso,
+            )
+            types = str((type(dataset_train).__name__, type(dataset_val).__name__))
 
-        ld_train = DataLoader(
-            dataset=dataset_train,
-            num_workers=args.workers,
-            pin_memory=True,
-            generator=args.get_different_generator_for_each_rank(
-            ),  # worker_init_fn=worker_init_fn,
-            batch_sampler=DistInfiniteBatchSampler(
-                dataset_len=len(dataset_train),
-                glb_batch_size=args.glb_batch_size,
-                same_seed_for_all_ranks=args.same_seed_for_all_ranks,
-                shuffle=True,
-                fill_last=True,
-                rank=dist.get_rank(),
-                world_size=dist.get_world_size(),
-                start_ep=start_ep,
-                start_it=start_it,
-            ),
-        )
-        # del dataset_train
+            ld_val = DataLoader(
+                dataset_val,
+                num_workers=0,
+                pin_memory=True,
+                batch_size=round(args.batch_size * 1.5),
+                sampler=EvalDistributedSampler(dataset_val,
+                                            num_replicas=dist.get_world_size(),
+                                            rank=dist.get_rank()),
+                shuffle=False,
+                drop_last=False,
+            )
+            del dataset_val
 
-        [print(line) for line in auto_resume_info]
-        print(f'[dataloader multi processing] ...', end='', flush=True)
-        stt = time.time()
-        iters_train = len(ld_train)
-        ld_train = iter(ld_train)
-        # noinspection PyArgumentList
-        print(f'     [dataloader multi processing](*) finished! ({time.time()-stt:.2f}s)',
-              flush=True,
-              clean=True)
-        print(
-            f'[dataloader] gbs={args.glb_batch_size}, lbs={args.batch_size}, iters_train={iters_train}, types(tr, va)={types}'
-        )
+            ld_train = DataLoader(
+                dataset=dataset_train,
+                num_workers=args.workers,
+                pin_memory=True,
+                generator=args.get_different_generator_for_each_rank(
+                ),  # worker_init_fn=worker_init_fn,
+                batch_sampler=DistInfiniteBatchSampler(
+                    dataset_len=len(dataset_train),
+                    glb_batch_size=args.glb_batch_size,
+                    same_seed_for_all_ranks=args.same_seed_for_all_ranks,
+                    shuffle=True,
+                    fill_last=True,
+                    rank=dist.get_rank(),
+                    world_size=dist.get_world_size(),
+                    start_ep=start_ep,
+                    start_it=start_it,
+                ),
+            )
+            del dataset_train
 
+            [print(line) for line in auto_resume_info]
+            print(f'[dataloader multi processing] ...', end='', flush=True)
+            stt = time.time()
+            iters_train = len(ld_train)
+            ld_train = iter(ld_train)
+            # noinspection PyArgumentList
+            print(f'     [dataloader multi processing](*) finished! ({time.time()-stt:.2f}s)',
+                flush=True,
+                clean=True)
+            print(
+                f'[dataloader] gbs={args.glb_batch_size}, lbs={args.batch_size}, iters_train={iters_train}, types(tr, va)={types}'
+            )
     else:
         num_classes = 1000
         ld_val = ld_train = None
@@ -131,7 +179,7 @@ def build_everything(args: arg_util.Args):
     )
 
     vae_ckpt = 'vae_ch160v4096z32.pth'
-    # TODO: DK use pretrained vae? 
+    # TODO: DK use pretrained vae?
     if dist.is_local_master():
         if not os.path.exists(vae_ckpt):
             os.system(f'wget https://huggingface.co/FoundationVision/var/resolve/main/{vae_ckpt}')
@@ -252,52 +300,11 @@ def main_training():
     if args.local_debug:
         torch.autograd.set_detect_anomaly(True)
 
-    (tb_lg, trainer, start_ep, start_it, _iters_train, _ld_train, _ld_val) = build_everything(args)
-    del _iters_train, _ld_train, _ld_val
-
+    (tb_lg, trainer, start_ep, start_it, iters_train, ld_train, ld_val) = build_everything(args)
     # train
     start_time = time.time()
     best_L_mean, best_L_tail, best_acc_mean, best_acc_tail = 999., 999., -1., -1.
     best_val_loss_mean, best_val_loss_tail, best_val_acc_mean, best_val_acc_tail = 999, 999, -1, -1
-
-    # My dataloader
-    train_dataset = CPDataset("/opt/disk1/dwang/sci/DVTON/data/VITON-HD/",
-                              256,
-                              mode="train",
-                              data_list="subtrain_1.txt")
-    ld_train = iter(
-        torch.utils.data.DataLoader(
-            train_dataset,
-            num_workers=1,
-            generator=args.get_different_generator_for_each_rank(),
-            pin_memory=True,
-            batch_sampler=DistInfiniteBatchSampler(
-                dataset_len=len(train_dataset),
-                glb_batch_size=args.glb_batch_size,
-                same_seed_for_all_ranks=args.same_seed_for_all_ranks,
-                shuffle=True,
-                fill_last=True,
-                rank=dist.get_rank(),
-                world_size=dist.get_world_size(),
-                start_ep=start_ep,
-                start_it=start_it,
-            ),
-        ))
-    ld_dataset = CPDataset("/opt/disk1/dwang/sci/DVTON/data/VITON-HD/",
-                           256,
-                           mode="train",
-                           data_list="subtrain_1.txt")
-    iters_train = math.ceil(len(train_dataset) / args.bs)
-    ld_val = torch.utils.data.DataLoader(
-            ld_dataset,
-            num_workers=0,
-            batch_size=round(args.batch_size * 1.5),
-            sampler=EvalDistributedSampler(ld_dataset,
-                                           num_replicas=dist.get_world_size(),
-                                           rank=dist.get_rank()),
-            shuffle=False,
-            drop_last=False,
-        )
 
     # TODO: test validation
     trainer.eval_ep(ld_val)
@@ -329,6 +336,8 @@ def main_training():
         AR_ep_loss = dict(L_mean=L_mean, L_tail=L_tail, acc_mean=acc_mean, acc_tail=acc_tail)
         is_val_and_also_saving = (ep + 1) % 10 == 0 or (ep + 1) == args.ep
         if is_val_and_also_saving:
+            print("val_and_also_saving")
+
             val_loss_mean, val_loss_tail, val_acc_mean, val_acc_tail, tot, cost = trainer.eval_ep(
                 ld_val)
             best_updated = best_val_loss_tail > val_loss_tail
@@ -425,12 +434,14 @@ def train_one_ep(ep: int, is_first_ep: bool, start_it: int, args: arg_util.Args,
             continue
         if is_first_ep and it == start_it:
             warnings.resetwarnings()
-
-        inp = data["image"]
-        batch_size = inp.shape[0]
+        if isinstance(data, dict):
+            inp = data["image"]
+            batch_size = inp.shape[0]
+            inp = (inp - 0.5) * 2.0
+            label = torch.tensor([834] * batch_size)  # 834 suit, suit of clothes
+        else:
+            inp, label = data
         inp = inp.to(args.device, non_blocking=True)
-        inp = (inp - 0.5) * 2.0
-        label = torch.tensor([834] * batch_size)  # 834 suit, suit of clothes
         label = label.to(args.device, non_blocking=True)
 
         args.cur_it = f'{it+1}/{iters_train}'

@@ -43,7 +43,7 @@ for model, key in ((vae, 'vae_local'), (var, 'var_wo_ddp')):
     model.load_state_dict(state_dict_combined['trainer'][key], strict=True)
 
 # vae.load_state_dict(torch.load(vae_ckpt, map_location='cpu'), strict=True)
-var.load_state_dict(torch.load(var_ckpt, map_location='cpu'), strict=True)
+# var.load_state_dict(torch.load(var_ckpt, map_location='cpu'), strict=True)
 vae.eval(), var.eval()
 for p in vae.parameters(): p.requires_grad_(False)
 for p in var.parameters(): p.requires_grad_(False)

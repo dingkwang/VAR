@@ -1,10 +1,15 @@
+import datetime
 import time
 from typing import List, Optional, Tuple, Union
-
+from numpy import isin
+import numpy as np
 import torch
+import torchvision
 import torch.nn as nn
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import DataLoader
+from PIL import Image
+import PIL.Image as PImage, PIL.ImageDraw as PImageDraw
 
 import dist
 from models import VAR, VQVAE, VectorQuantizer2
@@ -60,19 +65,23 @@ class VARTrainer(object):
 
     @torch.no_grad()
     def eval_ep(self, ld_val: DataLoader):
+        print("Running evaludation")
+
         tot = 0
         L_mean, L_tail, acc_mean, acc_tail = 0, 0, 0, 0
         stt = time.time()
         training = self.var_wo_ddp.training
         self.var_wo_ddp.eval()
         for batch_data in ld_val:
-            inp_B3HW = batch_data["image"]
-            batch_size = inp_B3HW.shape[0]
-            label_B = torch.tensor([834] * batch_size)
-
+            if isinstance(batch_data, dict):
+                inp_B3HW = batch_data["image"]
+                batch_size = inp_B3HW.shape[0]
+                label_B = torch.tensor([834] * batch_size)
+            else:
+                inp_B3HW, label_B = batch_data
             B, V = label_B.shape[0], self.vae_local.vocab_size
             inp_B3HW = inp_B3HW.to(dist.get_device(), non_blocking=True)
-            inp_B3HW = (inp_B3HW - 0.5) * 2.0    
+            inp_B3HW = (inp_B3HW - 0.5) * 2.0
             label_B = label_B.to(dist.get_device(), non_blocking=True)
 
             gt_idx_Bl: List[ITen] = self.vae_local.img_to_idxBl(inp_B3HW)
@@ -88,6 +97,22 @@ class VARTrainer(object):
             acc_tail += (logits_BLV.data[:, -self.last_l:].argmax(dim=-1)
                          == gt_BL[:, -self.last_l:]).sum() * (100 / self.last_l)
             tot += B
+            with torch.inference_mode():
+                with torch.autocast('cuda', enabled=True, dtype=torch.float16,
+                                    cache_enabled=True):  # using bfloat16 can be faster
+                    recon_B3HW = self.var_wo_ddp.autoregressive_infer_cfg(B=B,
+                                                                   label_B=label_B,
+                                                                   cfg=1,
+                                                                   top_k=900,
+                                                                   top_p=0.95,
+                                                                   g_seed=0,
+                                                                   more_smooth=False)
+            chw = torchvision.utils.make_grid(recon_B3HW, nrow=8, padding=0, pad_value=1.0)
+            chw = chw.permute(1, 2, 0).mul_(255).cpu().numpy()
+            chw = PImage.fromarray(chw.astype(np.uint8))
+            now = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+            fn = f'val_output_{now}.png'
+            chw.save(fn)
         self.var_wo_ddp.train(training)
 
         stats = L_mean.new_tensor(

@@ -24,6 +24,7 @@ import dist
 
 class Args(Tap):
     data_path: str = '/path/to/imagenet'
+    data_list: str = "subtrain_1.txt"
     exp_name: str = 'text'
     
     # VAE
