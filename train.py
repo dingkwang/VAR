@@ -131,6 +131,7 @@ def build_everything(args: arg_util.Args):
     )
 
     vae_ckpt = 'vae_ch160v4096z32.pth'
+    # TODO: DK use pretrained vae? 
     if dist.is_local_master():
         if not os.path.exists(vae_ckpt):
             os.system(f'wget https://huggingface.co/FoundationVision/var/resolve/main/{vae_ckpt}')

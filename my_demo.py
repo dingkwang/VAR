@@ -21,10 +21,10 @@ assert MODEL_DEPTH in {16, 20, 24, 30}
 
 
 # download checkpoint
-# hf_home = 'https://huggingface.co/FoundationVision/var/resolve/main'
-# vae_ckpt, var_ckpt = 'vae_ch160v4096z32.pth', f'var_d{MODEL_DEPTH}.pth'
-# if not osp.exists(vae_ckpt): os.system(f'wget {hf_home}/{vae_ckpt}')
-# if not osp.exists(var_ckpt): os.system(f'wget {hf_home}/{var_ckpt}')
+hf_home = 'https://huggingface.co/FoundationVision/var/resolve/main'
+vae_ckpt, var_ckpt = 'vae_ch160v4096z32.pth', f'var_d{MODEL_DEPTH}.pth'
+if not osp.exists(vae_ckpt): os.system(f'wget {hf_home}/{vae_ckpt}')
+if not osp.exists(var_ckpt): os.system(f'wget {hf_home}/{var_ckpt}')
 
 # build vae, var
 patch_nums = (1, 2, 3, 4, 5, 6, 8, 10, 13, 16)
@@ -39,10 +39,11 @@ if 'vae' not in globals() or 'var' not in globals():
 # load checkpoints
 state_dict_combined = torch.load("local_output/ar-ckpt-last.pth", map_location='cpu')
 for model, key in ((vae, 'vae_local'), (var, 'var_wo_ddp')):
-    # import ipdb; ipdb.set_trace()
+    import ipdb; ipdb.set_trace()
     model.load_state_dict(state_dict_combined['trainer'][key], strict=True)
+
 # vae.load_state_dict(torch.load(vae_ckpt, map_location='cpu'), strict=True)
-# var.load_state_dict(torch.load(var_ckpt, map_location='cpu'), strict=True)
+var.load_state_dict(torch.load(var_ckpt, map_location='cpu'), strict=True)
 vae.eval(), var.eval()
 for p in vae.parameters(): p.requires_grad_(False)
 for p in var.parameters(): p.requires_grad_(False)
