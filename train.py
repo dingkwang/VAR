@@ -24,7 +24,7 @@ from utils.lr_control import filter_params
 
 from cp_dataset import CPDatasetV2 as CPDataset
 
-
+os.environ["DEBUSSY"] = "1"
 def build_everything(args: arg_util.Args):
     # resume
     auto_resume_info, start_ep, start_it, trainer_state, args_state = auto_resume(
@@ -32,7 +32,8 @@ def build_everything(args: arg_util.Args):
     # create tensorboard logger
     # tb_lg: misc.TensorboardLogger
     with_tb_lg = dist.is_master()
-    wandb.init(project="var", config=args)
+    wandb.login()
+    wandb.init(project="var", dir=args.local_out_dir_path, config=args)
     if with_tb_lg:
         os.makedirs(args.tb_log_dir_path, exist_ok=True)
         # noinspection PyTypeChecker
@@ -40,12 +41,9 @@ def build_everything(args: arg_util.Args):
         #     log_dir=args.tb_log_dir_path, filename_suffix=f'__{misc.time_str("%m%d_%H%M")}'),
         #                         verbose=True)
         # tb_lg.flush()
-
-        wandb.run.dir = args.tb_log_dir_path
         wandb.run.notes = f"Run on {misc.time_str('%m%d_%H%M')}"
-        wandb.run.save()
         wandb_log = wandb
-        tb_lg = misc.DistLogger(wandb_log)
+        tb_lg = misc.DistLogger(wandb_log, verbose=True)
     else:
         # noinspection PyTypeChecker
         tb_lg = misc.DistLogger(None, verbose=False)
@@ -246,6 +244,7 @@ def build_everything(args: arg_util.Args):
         var=var,
         var_opt=var_optim,
         label_smooth=args.ls,
+        logger=tb_lg,
     )
     if trainer_state is not None and len(trainer_state):
         trainer.load_state_dict(trainer_state, strict=False, skip_vae=True)  # don't load vae again
@@ -285,8 +284,8 @@ def build_everything(args: arg_util.Args):
         print({k: meter.global_avg for k, meter in me.meters.items()})
 
         args.dump_log()
-        tb_lg.flush()
-        tb_lg.close()
+        # tb_lg.flush()
+        # tb_lg.close()
         if isinstance(sys.stdout, misc.SyncPrint) and isinstance(sys.stderr, misc.SyncPrint):
             sys.stdout.close(), sys.stderr.close()
         exit(0)
@@ -318,7 +317,8 @@ def main_training():
                 print(f'[{type(ld_train).__name__}] [ld_train.sampler.set_epoch({ep})]',
                       flush=True,
                       force=True)
-        tb_lg.set_step(ep * iters_train)
+        if tb_lg._lg.__name__ != "wandb":
+            tb_lg.set_step(ep * iters_train)
 
         stats, (sec, remain_time,
                 finish_time) = train_one_ep(ep, ep == start_ep, start_it if ep == start_ep else 0,
@@ -334,7 +334,7 @@ def main_training():
         args.remain_time, args.finish_time = remain_time, finish_time
 
         AR_ep_loss = dict(L_mean=L_mean, L_tail=L_tail, acc_mean=acc_mean, acc_tail=acc_tail)
-        is_val_and_also_saving = (ep + 1) % 10 == 0 or (ep + 1) == args.ep
+        is_val_and_also_saving = (ep + 1) % args.val_every == 0 or (ep + 1) == args.ep
         if is_val_and_also_saving:
             print("val_and_also_saving")
 
@@ -375,10 +375,10 @@ def main_training():
         print(
             f'     [ep{ep}]  (training )  Lm: {best_L_mean:.3f} ({L_mean:.3f}), Lt: {best_L_tail:.3f} ({L_tail:.3f}),  Acc m&t: {best_acc_mean:.2f} {best_acc_tail:.2f},  Remain: {remain_time},  Finish: {finish_time}',
             flush=True)
-        tb_lg.update(head='AR_ep_loss', step=ep + 1, **AR_ep_loss)
-        tb_lg.update(head='AR_z_burnout', step=ep + 1, rest_hours=round(sec / 60 / 60, 2))
+        tb_lg.log(AR_ep_loss)
+        # tb_lg.log(head='AR_z_burnout', step=ep + 1, rest_hours=round(sec / 60 / 60, 2))
         args.dump_log()
-        tb_lg.flush()
+        # tb_lg.flush()
 
     total_time = f'{(time.time() - start_time) / 60 / 60:.1f}h'
     print('\n\n')
@@ -489,16 +489,16 @@ def train_one_ep(ep: int, is_first_ep: bool, start_it: int, args: arg_util.Args,
         )
 
         me.update(tlr=max_tlr)
-        tb_lg.set_step(step=g_it)
-        tb_lg.update(head='AR_opt_lr/lr_min', sche_tlr=min_tlr)
-        tb_lg.update(head='AR_opt_lr/lr_max', sche_tlr=max_tlr)
-        tb_lg.update(head='AR_opt_wd/wd_max', sche_twd=max_twd)
-        tb_lg.update(head='AR_opt_wd/wd_min', sche_twd=min_twd)
-        tb_lg.update(head='AR_opt_grad/fp16', scale_log2=scale_log2)
+        # tb_lg.set_step(step=g_it)
+        tb_lg.log({'AR_opt_lr/lr_min':min_tlr})
+        tb_lg.log({'AR_opt_lr/lr_max': max_tlr})
+        tb_lg.log({'AR_opt_wd/wd_max':max_twd})
+        tb_lg.log({'AR_opt_wd/wd_min':min_twd})
+        tb_lg.log({'AR_opt_grad/fp16':scale_log2})
 
         if args.tclip > 0:
-            tb_lg.update(head='AR_opt_grad/grad', grad_norm=grad_norm)
-            tb_lg.update(head='AR_opt_grad/grad', grad_clip=args.tclip)
+            tb_lg.log({'AR_opt_grad/grad':grad_norm})
+            tb_lg.log({'AR_opt_grad/grad':args.tclip})
 
     me.synchronize_between_processes()
     return {

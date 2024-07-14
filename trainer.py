@@ -10,7 +10,8 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import DataLoader
 from PIL import Image
 import PIL.Image as PImage, PIL.ImageDraw as PImageDraw
-
+import wandb
+from tqdm import tqdm
 import dist
 from models import VAR, VQVAE, VectorQuantizer2
 from utils.amp_sc import AmpOptimizer
@@ -21,22 +22,25 @@ FTen = torch.Tensor
 ITen = torch.LongTensor
 BTen = torch.BoolTensor
 
+import torchvision.transforms as T
+
+transform = T.ToPILImage()
+
 
 class VARTrainer(object):
 
-    def __init__(
-        self,
-        device,
-        patch_nums: Tuple[int, ...],
-        resos: Tuple[int, ...],
-        vae_local: VQVAE,
-        var_wo_ddp: VAR,
-        var: DDP,
-        var_opt: AmpOptimizer,
-        label_smooth: float,
-    ):
+    def __init__(self,
+                 device,
+                 patch_nums: Tuple[int, ...],
+                 resos: Tuple[int, ...],
+                 vae_local: VQVAE,
+                 var_wo_ddp: VAR,
+                 var: DDP,
+                 var_opt: AmpOptimizer,
+                 label_smooth: float,
+                 logger=None):
         super(VARTrainer, self).__init__()
-
+        self.logger = logger
         self.var, self.vae_local, self.quantize_local = var, vae_local, vae_local.quantize
         self.quantize_local: VectorQuantizer2
         self.var_wo_ddp: VAR = var_wo_ddp  # after torch.compile
@@ -72,16 +76,16 @@ class VARTrainer(object):
         stt = time.time()
         training = self.var_wo_ddp.training
         self.var_wo_ddp.eval()
-        for batch_data in ld_val:
+        for batch_data in tqdm(ld_val):
             if isinstance(batch_data, dict):
                 inp_B3HW = batch_data["image"]
                 batch_size = inp_B3HW.shape[0]
                 label_B = torch.tensor([834] * batch_size)
+                inp_B3HW = (inp_B3HW - 0.5) * 2.0
             else:
                 inp_B3HW, label_B = batch_data
             B, V = label_B.shape[0], self.vae_local.vocab_size
             inp_B3HW = inp_B3HW.to(dist.get_device(), non_blocking=True)
-            inp_B3HW = (inp_B3HW - 0.5) * 2.0
             label_B = label_B.to(dist.get_device(), non_blocking=True)
 
             gt_idx_Bl: List[ITen] = self.vae_local.img_to_idxBl(inp_B3HW)
@@ -101,18 +105,27 @@ class VARTrainer(object):
                 with torch.autocast('cuda', enabled=True, dtype=torch.float16,
                                     cache_enabled=True):  # using bfloat16 can be faster
                     recon_B3HW = self.var_wo_ddp.autoregressive_infer_cfg(B=B,
-                                                                   label_B=label_B,
-                                                                   cfg=1,
-                                                                   top_k=900,
-                                                                   top_p=0.95,
-                                                                   g_seed=0,
-                                                                   more_smooth=False)
+                                                                          label_B=label_B,
+                                                                          cfg=1,
+                                                                          top_k=900,
+                                                                          top_p=0.95,
+                                                                          g_seed=0,
+                                                                          more_smooth=False)
             chw = torchvision.utils.make_grid(recon_B3HW, nrow=8, padding=0, pad_value=1.0)
             chw = chw.permute(1, 2, 0).mul_(255).cpu().numpy()
-            chw = PImage.fromarray(chw.astype(np.uint8))
-            now = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-            fn = f'val_output_{now}.png'
-            chw.save(fn)
+            # chw = PImage.fromarray(chw.astype(np.uint8))
+            # now = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+            # fn = f'val_output_{now}.png'
+            # chw.save(fn)
+            if self.logger is not None:
+                formatted_images = []
+                for i in range(inp_B3HW.shape[0]):
+                    gt = (inp_B3HW[i] + 1) / 2
+                    formatted_images.append(wandb.Image(transform(gt.cpu()), caption=f"GT/{label_B[i]}"))
+                    recon_img = recon_B3HW[i]
+                    formatted_images.append(wandb.Image(transform(recon_img.cpu()),caption=f"reconstruct/{label_B[i]}"))
+                self.logger.log({"validation": formatted_images})
+
         self.var_wo_ddp.train(training)
 
         stats = L_mean.new_tensor(
@@ -197,9 +210,9 @@ class VARTrainer(object):
             prob_per_class_is_chosen /= prob_per_class_is_chosen.sum()
             cluster_usage = (prob_per_class_is_chosen > 0.001 / V).float().mean().item() * 100
             if dist.is_master():
-                if g_it == 0:
-                    tb_lg.update(head='AR_iter_loss', z_voc_usage=cluster_usage, step=-10000)
-                    tb_lg.update(head='AR_iter_loss', z_voc_usage=cluster_usage, step=-1000)
+                # if g_it == 0:
+                # tb_lg.log({'AR_iter_loss': cluster_usage})
+                # tb_lg.log({'AR_iter_loss': cluster_usage})
                 kw = dict(z_voc_usage=cluster_usage)
                 for si, (bg, ed) in enumerate(self.begin_ends):
                     if 0 <= prog_si < si:
@@ -210,12 +223,8 @@ class VARTrainer(object):
                     ce = self.val_loss(pred, tar).item()
                     kw[f'acc_{self.resos[si]}'] = acc
                     kw[f'L_{self.resos[si]}'] = ce
-                tb_lg.update(head='AR_iter_loss', **kw, step=g_it)
-                tb_lg.update(head='AR_iter_schedule',
-                             prog_a_reso=self.resos[prog_si],
-                             prog_si=prog_si,
-                             prog_wp=prog_wp,
-                             step=g_it)
+                tb_lg.log({'AR_iter_loss': kw})
+                tb_lg.log({'AR_iter_schedule': self.resos[prog_si]})
 
         self.var_wo_ddp.prog_si = self.vae_local.quantize.prog_si = -1
         return grad_norm, scale_log2

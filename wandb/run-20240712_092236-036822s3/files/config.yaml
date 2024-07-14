@@ -1,0 +1,1072 @@
+wandb_version: 1
+
+_initialized:
+  desc: null
+  value: true
+_explicit_bool:
+  desc: null
+  value: true
+_underscores_to_dashes:
+  desc: null
+  value: false
+_parsed:
+  desc: null
+  value: true
+extra_args:
+  desc: null
+  value: []
+argument_buffer:
+  desc: null
+  value:
+    help:
+    - - -h
+      - --help
+    - action: help
+      default: ==SUPPRESS==
+      help: show this help message and exit
+_subparser_buffer:
+  desc: null
+  value: []
+class_variables:
+  desc: null
+  value:
+    data_path:
+      comment: ''
+    data_list:
+      comment: ''
+    exp_name:
+      comment: ''
+    vfast:
+      comment: 'torch.compile VAE; =0: not compile; 1: compile with ''reduce-overhead'';
+        2: compile with ''max-autotune'''
+    tfast:
+      comment: 'torch.compile VAR; =0: not compile; 1: compile with ''reduce-overhead'';
+        2: compile with ''max-autotune'''
+    depth:
+      comment: VAR depth
+    ini:
+      comment: '-1: automated model parameter initialization'
+    hd:
+      comment: head.w *= hd
+    aln:
+      comment: the multiplier of ada_lin.w's initialization
+    alng:
+      comment: the multiplier of ada_lin.w[gamma channels]'s initialization
+    fp16:
+      comment: '1: using fp16, 2: bf16'
+    tblr:
+      comment: base lr
+    tlr:
+      comment: lr = base lr * (bs / 256)
+    twd:
+      comment: initial wd
+    twde:
+      comment: final wd, =twde or twd
+    tclip:
+      comment: <=0 for not using grad clip
+    ls:
+      comment: label smooth
+    bs:
+      comment: global batch size
+    batch_size:
+      comment: '[automatically set; don''t specify this] batch size per GPU = round(args.bs
+        / args.ac / dist.get_world_size() / 8) * 8'
+    glb_batch_size:
+      comment: '[automatically set; don''t specify this] global batch size = args.batch_size
+        * dist.get_world_size()'
+    ac:
+      comment: gradient accumulation
+    ep:
+      comment: ''
+    wp:
+      comment: ''
+    wp0:
+      comment: initial lr ratio at the begging of lr warm up
+    wpe:
+      comment: final lr ratio at the end of training
+    sche:
+      comment: lr schedule
+    opt:
+      comment: 'lion: https://cloud.tencent.com/developer/article/2336657?areaId=106001
+        lr=5e-5 (0.25x) wd=0.8 (8x); Lion needs a large bs to work'
+    afuse:
+      comment: fused adamw
+    saln:
+      comment: whether to use shared adaln
+    anorm:
+      comment: whether to use L2 normalized attention
+    fuse:
+      comment: whether to use fused op like flash attn, xformers, fused MLP, fused
+        LayerNorm, etc.
+    pn:
+      comment: ''
+    patch_size:
+      comment: ''
+    patch_nums:
+      comment: '[automatically set; don''t specify this] = tuple(map(int, args.pn.replace(''-'',
+        ''_'').split(''_'')))'
+    resos:
+      comment: '[automatically set; don''t specify this] = tuple(pn * args.patch_size
+        for pn in args.patch_nums)'
+    data_load_reso:
+      comment: '[automatically set; don''t specify this] would be max(patch_nums)
+        * patch_size'
+    mid_reso:
+      comment: 'aug: first resize to mid_reso = 1.125 * data_load_reso, then crop
+        to data_load_reso'
+    hflip:
+      comment: 'augmentation: horizontal flip'
+    workers:
+      comment: 'num workers; 0: auto, -1: don''t use multiprocessing in DataLoader'
+    pg:
+      comment: '>0 for use progressive training during [0%, this] of training'
+    pg0:
+      comment: 'progressive initial stage, 0: from the 1st token map, 1: from the
+        2nd token map, etc'
+    pgwp:
+      comment: num of warmup epochs at each progressive stage
+    cmd:
+      comment: '[automatically set; don''t specify this]'
+    branch:
+      comment: '[automatically set; don''t specify this]'
+    commit_id:
+      comment: '[automatically set; don''t specify this]'
+    commit_msg:
+      comment: '[automatically set; don''t specify this]'
+    acc_mean:
+      comment: '[automatically set; don''t specify this]'
+    acc_tail:
+      comment: '[automatically set; don''t specify this]'
+    L_mean:
+      comment: '[automatically set; don''t specify this]'
+    L_tail:
+      comment: '[automatically set; don''t specify this]'
+    vacc_mean:
+      comment: '[automatically set; don''t specify this]'
+    vacc_tail:
+      comment: '[automatically set; don''t specify this]'
+    vL_mean:
+      comment: '[automatically set; don''t specify this]'
+    vL_tail:
+      comment: '[automatically set; don''t specify this]'
+    grad_norm:
+      comment: '[automatically set; don''t specify this]'
+    cur_lr:
+      comment: '[automatically set; don''t specify this]'
+    cur_wd:
+      comment: '[automatically set; don''t specify this]'
+    cur_it:
+      comment: '[automatically set; don''t specify this]'
+    cur_ep:
+      comment: '[automatically set; don''t specify this]'
+    remain_time:
+      comment: '[automatically set; don''t specify this]'
+    finish_time:
+      comment: '[automatically set; don''t specify this]'
+    local_out_dir_path:
+      comment: '[automatically set; don''t specify this]'
+    tb_log_dir_path:
+      comment: '[automatically set; don''t specify this]'
+    log_txt_path:
+      comment: '[automatically set; don''t specify this]'
+    last_ckpt_path:
+      comment: '[automatically set; don''t specify this]'
+    tf32:
+      comment: whether to use TensorFloat32
+    device:
+      comment: '[automatically set; don''t specify this]'
+    seed:
+      comment: seed
+    same_seed_for_all_ranks:
+      comment: this is only for distributed sampler
+    local_debug:
+      comment: ''
+    dbg_nan:
+      comment: '''KEVIN_LOCAL'' in os.environ'
+_annotations:
+  desc: null
+  value:
+    data_path: builtins.str
+    data_list: builtins.str
+    exp_name: builtins.str
+    vfast: builtins.int
+    tfast: builtins.int
+    depth: builtins.int
+    ini: builtins.float
+    hd: builtins.float
+    aln: builtins.float
+    alng: builtins.float
+    fp16: builtins.int
+    tblr: builtins.float
+    tlr: builtins.float
+    twd: builtins.float
+    twde: builtins.float
+    tclip: builtins.float
+    ls: builtins.float
+    bs: builtins.int
+    batch_size: builtins.int
+    glb_batch_size: builtins.int
+    ac: builtins.int
+    ep: builtins.int
+    wp: builtins.float
+    wp0: builtins.float
+    wpe: builtins.float
+    sche: builtins.str
+    opt: builtins.str
+    afuse: builtins.bool
+    saln: builtins.bool
+    anorm: builtins.bool
+    fuse: builtins.bool
+    pn: builtins.str
+    patch_size: builtins.int
+    patch_nums: builtins.tuple
+    resos: builtins.tuple
+    data_load_reso: builtins.int
+    mid_reso: builtins.float
+    hflip: builtins.bool
+    workers: builtins.int
+    pg: builtins.float
+    pg0: builtins.int
+    pgwp: builtins.float
+    cmd: builtins.str
+    branch: builtins.str
+    commit_id: builtins.str
+    commit_msg: builtins.str
+    acc_mean: builtins.float
+    acc_tail: builtins.float
+    L_mean: builtins.float
+    L_tail: builtins.float
+    vacc_mean: builtins.float
+    vacc_tail: builtins.float
+    vL_mean: builtins.float
+    vL_tail: builtins.float
+    grad_norm: builtins.float
+    cur_lr: builtins.float
+    cur_wd: builtins.float
+    cur_it: builtins.str
+    cur_ep: builtins.str
+    remain_time: builtins.str
+    finish_time: builtins.str
+    local_out_dir_path: builtins.str
+    tb_log_dir_path: builtins.str
+    log_txt_path: builtins.str
+    last_ckpt_path: builtins.str
+    tf32: builtins.bool
+    device: builtins.str
+    seed: builtins.int
+    same_seed_for_all_ranks: builtins.int
+    local_debug: builtins.bool
+    dbg_nan: builtins.bool
+description:
+  desc: null
+  value: null
+argument_default:
+  desc: null
+  value: null
+prefix_chars:
+  desc: null
+  value: '-'
+conflict_handler:
+  desc: null
+  value: error
+_registries:
+  desc: null
+  value:
+    action:
+      'null': argparse._StoreAction
+      store: argparse._StoreAction
+      store_const: argparse._StoreConstAction
+      store_true: argparse._StoreTrueAction
+      store_false: argparse._StoreFalseAction
+      append: argparse._AppendAction
+      append_const: argparse._AppendConstAction
+      count: argparse._CountAction
+      help: argparse._HelpAction
+      version: argparse._VersionAction
+      parsers: argparse._SubParsersAction
+      extend: argparse._ExtendAction
+    type:
+      'null': argparse.ArgumentParser.__init__.<locals>.identity
+_actions:
+  desc: null
+  value:
+  - _StoreAction(option_strings=['--data_path'], dest='data_path', nargs=None, const=None,
+    default='/path/to/imagenet', type=<class 'str'>, choices=None, help='(str, default=/path/to/imagenet)
+    ', metavar=None)
+  - _StoreAction(option_strings=['--data_list'], dest='data_list', nargs=None, const=None,
+    default='subtrain_1.txt', type=<class 'str'>, choices=None, help='(str, default=subtrain_1.txt)
+    ', metavar=None)
+  - _StoreAction(option_strings=['--exp_name'], dest='exp_name', nargs=None, const=None,
+    default='text', type=<class 'str'>, choices=None, help='(str, default=text) ',
+    metavar=None)
+  - '_StoreAction(option_strings=[''--vfast''], dest=''vfast'', nargs=None, const=None,
+    default=0, type=<class ''int''>, choices=None, help="(int, default=0) torch.compile
+    VAE; =0: not compile; 1: compile with ''reduce-overhead''; 2: compile with ''max-autotune''",
+    metavar=None)'
+  - '_StoreAction(option_strings=[''--tfast''], dest=''tfast'', nargs=None, const=None,
+    default=0, type=<class ''int''>, choices=None, help="(int, default=0) torch.compile
+    VAR; =0: not compile; 1: compile with ''reduce-overhead''; 2: compile with ''max-autotune''",
+    metavar=None)'
+  - _StoreAction(option_strings=['--depth'], dest='depth', nargs=None, const=None,
+    default=16, type=<class 'int'>, choices=None, help='(int, default=16) VAR depth',
+    metavar=None)
+  - '_StoreAction(option_strings=[''--ini''], dest=''ini'', nargs=None, const=None,
+    default=-1, type=<class ''float''>, choices=None, help=''(float, default=-1) -1:
+    automated model parameter initialization'', metavar=None)'
+  - _StoreAction(option_strings=['--hd'], dest='hd', nargs=None, const=None, default=0.02,
+    type=<class 'float'>, choices=None, help='(float, default=0.02) head.w *= hd',
+    metavar=None)
+  - _StoreAction(option_strings=['--aln'], dest='aln', nargs=None, const=None, default=0.5,
+    type=<class 'float'>, choices=None, help="(float, default=0.5) the multiplier
+    of ada_lin.w's initialization", metavar=None)
+  - _StoreAction(option_strings=['--alng'], dest='alng', nargs=None, const=None, default=1e-05,
+    type=<class 'float'>, choices=None, help="(float, default=1e-05) the multiplier
+    of ada_lin.w[gamma channels]'s initialization", metavar=None)
+  - '_StoreAction(option_strings=[''--fp16''], dest=''fp16'', nargs=None, const=None,
+    default=0, type=<class ''int''>, choices=None, help=''(int, default=0) 1: using
+    fp16, 2: bf16'', metavar=None)'
+  - _StoreAction(option_strings=['--tblr'], dest='tblr', nargs=None, const=None, default=0.0001,
+    type=<class 'float'>, choices=None, help='(float, default=0.0001) base lr', metavar=None)
+  - _StoreAction(option_strings=['--tlr'], dest='tlr', nargs=None, const=None, default=None,
+    type=<class 'float'>, choices=None, help='(float, default=None) lr = base lr *
+    (bs / 256)', metavar=None)
+  - _StoreAction(option_strings=['--twd'], dest='twd', nargs=None, const=None, default=0.05,
+    type=<class 'float'>, choices=None, help='(float, default=0.05) initial wd', metavar=None)
+  - _StoreAction(option_strings=['--twde'], dest='twde', nargs=None, const=None, default=0,
+    type=<class 'float'>, choices=None, help='(float, default=0) final wd, =twde or
+    twd', metavar=None)
+  - _StoreAction(option_strings=['--tclip'], dest='tclip', nargs=None, const=None,
+    default=2.0, type=<class 'float'>, choices=None, help='(float, default=2.0) <=0
+    for not using grad clip', metavar=None)
+  - _StoreAction(option_strings=['--ls'], dest='ls', nargs=None, const=None, default=0.0,
+    type=<class 'float'>, choices=None, help='(float, default=0.0) label smooth',
+    metavar=None)
+  - _StoreAction(option_strings=['--bs'], dest='bs', nargs=None, const=None, default=32,
+    type=<class 'int'>, choices=None, help='(int, default=32) global batch size',
+    metavar=None)
+  - _StoreAction(option_strings=['--batch_size'], dest='batch_size', nargs=None, const=None,
+    default=0, type=<class 'int'>, choices=None, help="(int, default=0) [automatically
+    set; don't specify this] batch size per GPU = round(args.bs / args.ac / dist.get_world_size()
+    / 8) * 8", metavar=None)
+  - _StoreAction(option_strings=['--glb_batch_size'], dest='glb_batch_size', nargs=None,
+    const=None, default=0, type=<class 'int'>, choices=None, help="(int, default=0)
+    [automatically set; don't specify this] global batch size = args.batch_size *
+    dist.get_world_size()", metavar=None)
+  - _StoreAction(option_strings=['--ac'], dest='ac', nargs=None, const=None, default=1,
+    type=<class 'int'>, choices=None, help='(int, default=1) gradient accumulation',
+    metavar=None)
+  - _StoreAction(option_strings=['--ep'], dest='ep', nargs=None, const=None, default=250,
+    type=<class 'int'>, choices=None, help='(int, default=250) ', metavar=None)
+  - _StoreAction(option_strings=['--wp'], dest='wp', nargs=None, const=None, default=0,
+    type=<class 'float'>, choices=None, help='(float, default=0) ', metavar=None)
+  - _StoreAction(option_strings=['--wp0'], dest='wp0', nargs=None, const=None, default=0.005,
+    type=<class 'float'>, choices=None, help='(float, default=0.005) initial lr ratio
+    at the begging of lr warm up', metavar=None)
+  - _StoreAction(option_strings=['--wpe'], dest='wpe', nargs=None, const=None, default=0.01,
+    type=<class 'float'>, choices=None, help='(float, default=0.01) final lr ratio
+    at the end of training', metavar=None)
+  - _StoreAction(option_strings=['--sche'], dest='sche', nargs=None, const=None, default='lin0',
+    type=<class 'str'>, choices=None, help='(str, default=lin0) lr schedule', metavar=None)
+  - '_StoreAction(option_strings=[''--opt''], dest=''opt'', nargs=None, const=None,
+    default=''adamw'', type=<class ''str''>, choices=None, help=''(str, default=adamw)
+    lion: https://cloud.tencent.com/developer/article/2336657?areaId=106001 lr=5e-5
+    (0.25x) wd=0.8 (8x); Lion needs a large bs to work'', metavar=None)'
+  - _StoreAction(option_strings=['--afuse'], dest='afuse', nargs=None, const=None,
+    default=True, type=<function boolean_type at 0x7fcab1845ca0>, choices=[True, False],
+    help='(bool, default=True) fused adamw', metavar=None)
+  - _StoreAction(option_strings=['--saln'], dest='saln', nargs=None, const=None, default=False,
+    type=<function boolean_type at 0x7fcab1845ca0>, choices=[True, False], help='(bool,
+    default=False) whether to use shared adaln', metavar=None)
+  - _StoreAction(option_strings=['--anorm'], dest='anorm', nargs=None, const=None,
+    default=True, type=<function boolean_type at 0x7fcab1845ca0>, choices=[True, False],
+    help='(bool, default=True) whether to use L2 normalized attention', metavar=None)
+  - _StoreAction(option_strings=['--fuse'], dest='fuse', nargs=None, const=None, default=True,
+    type=<function boolean_type at 0x7fcab1845ca0>, choices=[True, False], help='(bool,
+    default=True) whether to use fused op like flash attn, xformers, fused MLP, fused
+    LayerNorm, etc.', metavar=None)
+  - _StoreAction(option_strings=['--pn'], dest='pn', nargs=None, const=None, default='1_2_3_4_5_6_8_10_13_16',
+    type=<class 'str'>, choices=None, help='(str, default=1_2_3_4_5_6_8_10_13_16)
+    ', metavar=None)
+  - _StoreAction(option_strings=['--patch_size'], dest='patch_size', nargs=None, const=None,
+    default=16, type=<class 'int'>, choices=None, help='(int, default=16) ', metavar=None)
+  - _StoreAction(option_strings=['--patch_nums'], dest='patch_nums', nargs='*', const=None,
+    default=None, type=<class 'str'>, choices=None, help="(tuple, default=None) [automatically
+    set; don't specify this] = tuple(map(int, args.pn.replace('-', '_').split('_')))",
+    metavar=None)
+  - _StoreAction(option_strings=['--resos'], dest='resos', nargs='*', const=None,
+    default=None, type=<class 'str'>, choices=None, help="(tuple, default=None) [automatically
+    set; don't specify this] = tuple(pn * args.patch_size for pn in args.patch_nums)",
+    metavar=None)
+  - _StoreAction(option_strings=['--data_load_reso'], dest='data_load_reso', nargs=None,
+    const=None, default=None, type=<class 'int'>, choices=None, help="(int, default=None)
+    [automatically set; don't specify this] would be max(patch_nums) * patch_size",
+    metavar=None)
+  - '_StoreAction(option_strings=[''--mid_reso''], dest=''mid_reso'', nargs=None,
+    const=None, default=1.125, type=<class ''float''>, choices=None, help=''(float,
+    default=1.125) aug: first resize to mid_reso = 1.125 * data_load_reso, then crop
+    to data_load_reso'', metavar=None)'
+  - '_StoreAction(option_strings=[''--hflip''], dest=''hflip'', nargs=None, const=None,
+    default=False, type=<function boolean_type at 0x7fcab1845ca0>, choices=[True,
+    False], help=''(bool, default=False) augmentation: horizontal flip'', metavar=None)'
+  - '_StoreAction(option_strings=[''--workers''], dest=''workers'', nargs=None, const=None,
+    default=0, type=<class ''int''>, choices=None, help="(int, default=0) num workers;
+    0: auto, -1: don''t use multiprocessing in DataLoader", metavar=None)'
+  - _StoreAction(option_strings=['--pg'], dest='pg', nargs=None, const=None, default=0.0,
+    type=<class 'float'>, choices=None, help='(float, default=0.0) >0 for use progressive
+    training during [0%, this] of training', metavar=None)
+  - '_StoreAction(option_strings=[''--pg0''], dest=''pg0'', nargs=None, const=None,
+    default=4, type=<class ''int''>, choices=None, help=''(int, default=4) progressive
+    initial stage, 0: from the 1st token map, 1: from the 2nd token map, etc'', metavar=None)'
+  - _StoreAction(option_strings=['--pgwp'], dest='pgwp', nargs=None, const=None, default=0,
+    type=<class 'float'>, choices=None, help='(float, default=0) num of warmup epochs
+    at each progressive stage', metavar=None)
+  - _StoreAction(option_strings=['--cmd'], dest='cmd', nargs=None, const=None, default='--data_path
+    /home/dwang/sci/ImageNet/ILSVRC/Data/CLS-LOC_mini/', type=<class 'str'>, choices=None,
+    help="(str, default=--data_path /home/dwang/sci/ImageNet/ILSVRC/Data/CLS-LOC_mini/)
+    [automatically set; don't specify this]", metavar=None)
+  - _StoreAction(option_strings=['--branch'], dest='branch', nargs=None, const=None,
+    default='main', type=<class 'str'>, choices=None, help="(str, default=main) [automatically
+    set; don't specify this]", metavar=None)
+  - _StoreAction(option_strings=['--commit_id'], dest='commit_id', nargs=None, const=None,
+    default='0dbf2b5c7f1c9d4ddcbd69b4945efb4298cb17ec', type=<class 'str'>, choices=None,
+    help="(str, default=0dbf2b5c7f1c9d4ddcbd69b4945efb4298cb17ec) [automatically set;
+    don't specify this]", metavar=None)
+  - _StoreAction(option_strings=['--commit_msg'], dest='commit_msg', nargs=None, const=None,
+    default='wandb', type=<class 'str'>, choices=None, help="(str, default=wandb)
+    [automatically set; don't specify this]", metavar=None)
+  - _StoreAction(option_strings=['--acc_mean'], dest='acc_mean', nargs=None, const=None,
+    default=None, type=<class 'float'>, choices=None, help="(float, default=None)
+    [automatically set; don't specify this]", metavar=None)
+  - _StoreAction(option_strings=['--acc_tail'], dest='acc_tail', nargs=None, const=None,
+    default=None, type=<class 'float'>, choices=None, help="(float, default=None)
+    [automatically set; don't specify this]", metavar=None)
+  - _StoreAction(option_strings=['--L_mean'], dest='L_mean', nargs=None, const=None,
+    default=None, type=<class 'float'>, choices=None, help="(float, default=None)
+    [automatically set; don't specify this]", metavar=None)
+  - _StoreAction(option_strings=['--L_tail'], dest='L_tail', nargs=None, const=None,
+    default=None, type=<class 'float'>, choices=None, help="(float, default=None)
+    [automatically set; don't specify this]", metavar=None)
+  - _StoreAction(option_strings=['--vacc_mean'], dest='vacc_mean', nargs=None, const=None,
+    default=None, type=<class 'float'>, choices=None, help="(float, default=None)
+    [automatically set; don't specify this]", metavar=None)
+  - _StoreAction(option_strings=['--vacc_tail'], dest='vacc_tail', nargs=None, const=None,
+    default=None, type=<class 'float'>, choices=None, help="(float, default=None)
+    [automatically set; don't specify this]", metavar=None)
+  - _StoreAction(option_strings=['--vL_mean'], dest='vL_mean', nargs=None, const=None,
+    default=None, type=<class 'float'>, choices=None, help="(float, default=None)
+    [automatically set; don't specify this]", metavar=None)
+  - _StoreAction(option_strings=['--vL_tail'], dest='vL_tail', nargs=None, const=None,
+    default=None, type=<class 'float'>, choices=None, help="(float, default=None)
+    [automatically set; don't specify this]", metavar=None)
+  - _StoreAction(option_strings=['--grad_norm'], dest='grad_norm', nargs=None, const=None,
+    default=None, type=<class 'float'>, choices=None, help="(float, default=None)
+    [automatically set; don't specify this]", metavar=None)
+  - _StoreAction(option_strings=['--cur_lr'], dest='cur_lr', nargs=None, const=None,
+    default=None, type=<class 'float'>, choices=None, help="(float, default=None)
+    [automatically set; don't specify this]", metavar=None)
+  - _StoreAction(option_strings=['--cur_wd'], dest='cur_wd', nargs=None, const=None,
+    default=None, type=<class 'float'>, choices=None, help="(float, default=None)
+    [automatically set; don't specify this]", metavar=None)
+  - _StoreAction(option_strings=['--cur_it'], dest='cur_it', nargs=None, const=None,
+    default='', type=<class 'str'>, choices=None, help="(str, default=) [automatically
+    set; don't specify this]", metavar=None)
+  - _StoreAction(option_strings=['--cur_ep'], dest='cur_ep', nargs=None, const=None,
+    default='', type=<class 'str'>, choices=None, help="(str, default=) [automatically
+    set; don't specify this]", metavar=None)
+  - _StoreAction(option_strings=['--remain_time'], dest='remain_time', nargs=None,
+    const=None, default='', type=<class 'str'>, choices=None, help="(str, default=)
+    [automatically set; don't specify this]", metavar=None)
+  - _StoreAction(option_strings=['--finish_time'], dest='finish_time', nargs=None,
+    const=None, default='', type=<class 'str'>, choices=None, help="(str, default=)
+    [automatically set; don't specify this]", metavar=None)
+  - _StoreAction(option_strings=['--local_out_dir_path'], dest='local_out_dir_path',
+    nargs=None, const=None, default='/home/dwang/vton/VAR/local_output', type=<class
+    'str'>, choices=None, help="(str, default=/home/dwang/vton/VAR/local_output) [automatically
+    set; don't specify this]", metavar=None)
+  - _StoreAction(option_strings=['--tb_log_dir_path'], dest='tb_log_dir_path', nargs=None,
+    const=None, default='...tb-...', type=<class 'str'>, choices=None, help="(str,
+    default=...tb-...) [automatically set; don't specify this]", metavar=None)
+  - _StoreAction(option_strings=['--log_txt_path'], dest='log_txt_path', nargs=None,
+    const=None, default='...', type=<class 'str'>, choices=None, help="(str, default=...)
+    [automatically set; don't specify this]", metavar=None)
+  - _StoreAction(option_strings=['--last_ckpt_path'], dest='last_ckpt_path', nargs=None,
+    const=None, default='...', type=<class 'str'>, choices=None, help="(str, default=...)
+    [automatically set; don't specify this]", metavar=None)
+  - _StoreAction(option_strings=['--tf32'], dest='tf32', nargs=None, const=None, default=True,
+    type=<function boolean_type at 0x7fcab1845ca0>, choices=[True, False], help='(bool,
+    default=True) whether to use TensorFloat32', metavar=None)
+  - _StoreAction(option_strings=['--device'], dest='device', nargs=None, const=None,
+    default='cpu', type=<class 'str'>, choices=None, help="(str, default=cpu) [automatically
+    set; don't specify this]", metavar=None)
+  - _StoreAction(option_strings=['--seed'], dest='seed', nargs=None, const=None, default=None,
+    type=<class 'int'>, choices=None, help='(int, default=None) seed', metavar=None)
+  - _StoreAction(option_strings=['--same_seed_for_all_ranks'], dest='same_seed_for_all_ranks',
+    nargs=None, const=None, default=0, type=<class 'int'>, choices=None, help='(int,
+    default=0) this is only for distributed sampler', metavar=None)
+  - _StoreAction(option_strings=['--local_debug'], dest='local_debug', nargs=None,
+    const=None, default=False, type=<function boolean_type at 0x7fcab1845ca0>, choices=[True,
+    False], help='(bool, default=False) ', metavar=None)
+  - _StoreAction(option_strings=['--dbg_nan'], dest='dbg_nan', nargs=None, const=None,
+    default=False, type=<function boolean_type at 0x7fcab1845ca0>, choices=[True,
+    False], help="(bool, default=False) 'KEVIN_LOCAL' in os.environ", metavar=None)
+  - _HelpAction(option_strings=['-h', '--help'], dest='help', nargs=0, const=None,
+    default='==SUPPRESS==', type=None, choices=None, help='show this help message
+    and exit', metavar=None)
+_option_string_actions:
+  desc: null
+  value:
+    --data_path: _StoreAction(option_strings=['--data_path'], dest='data_path', nargs=None,
+      const=None, default='/path/to/imagenet', type=<class 'str'>, choices=None, help='(str,
+      default=/path/to/imagenet) ', metavar=None)
+    --data_list: _StoreAction(option_strings=['--data_list'], dest='data_list', nargs=None,
+      const=None, default='subtrain_1.txt', type=<class 'str'>, choices=None, help='(str,
+      default=subtrain_1.txt) ', metavar=None)
+    --exp_name: _StoreAction(option_strings=['--exp_name'], dest='exp_name', nargs=None,
+      const=None, default='text', type=<class 'str'>, choices=None, help='(str, default=text)
+      ', metavar=None)
+    --vfast: '_StoreAction(option_strings=[''--vfast''], dest=''vfast'', nargs=None,
+      const=None, default=0, type=<class ''int''>, choices=None, help="(int, default=0)
+      torch.compile VAE; =0: not compile; 1: compile with ''reduce-overhead''; 2:
+      compile with ''max-autotune''", metavar=None)'
+    --tfast: '_StoreAction(option_strings=[''--tfast''], dest=''tfast'', nargs=None,
+      const=None, default=0, type=<class ''int''>, choices=None, help="(int, default=0)
+      torch.compile VAR; =0: not compile; 1: compile with ''reduce-overhead''; 2:
+      compile with ''max-autotune''", metavar=None)'
+    --depth: _StoreAction(option_strings=['--depth'], dest='depth', nargs=None, const=None,
+      default=16, type=<class 'int'>, choices=None, help='(int, default=16) VAR depth',
+      metavar=None)
+    --ini: '_StoreAction(option_strings=[''--ini''], dest=''ini'', nargs=None, const=None,
+      default=-1, type=<class ''float''>, choices=None, help=''(float, default=-1)
+      -1: automated model parameter initialization'', metavar=None)'
+    --hd: _StoreAction(option_strings=['--hd'], dest='hd', nargs=None, const=None,
+      default=0.02, type=<class 'float'>, choices=None, help='(float, default=0.02)
+      head.w *= hd', metavar=None)
+    --aln: _StoreAction(option_strings=['--aln'], dest='aln', nargs=None, const=None,
+      default=0.5, type=<class 'float'>, choices=None, help="(float, default=0.5)
+      the multiplier of ada_lin.w's initialization", metavar=None)
+    --alng: _StoreAction(option_strings=['--alng'], dest='alng', nargs=None, const=None,
+      default=1e-05, type=<class 'float'>, choices=None, help="(float, default=1e-05)
+      the multiplier of ada_lin.w[gamma channels]'s initialization", metavar=None)
+    --fp16: '_StoreAction(option_strings=[''--fp16''], dest=''fp16'', nargs=None,
+      const=None, default=0, type=<class ''int''>, choices=None, help=''(int, default=0)
+      1: using fp16, 2: bf16'', metavar=None)'
+    --tblr: _StoreAction(option_strings=['--tblr'], dest='tblr', nargs=None, const=None,
+      default=0.0001, type=<class 'float'>, choices=None, help='(float, default=0.0001)
+      base lr', metavar=None)
+    --tlr: _StoreAction(option_strings=['--tlr'], dest='tlr', nargs=None, const=None,
+      default=None, type=<class 'float'>, choices=None, help='(float, default=None)
+      lr = base lr * (bs / 256)', metavar=None)
+    --twd: _StoreAction(option_strings=['--twd'], dest='twd', nargs=None, const=None,
+      default=0.05, type=<class 'float'>, choices=None, help='(float, default=0.05)
+      initial wd', metavar=None)
+    --twde: _StoreAction(option_strings=['--twde'], dest='twde', nargs=None, const=None,
+      default=0, type=<class 'float'>, choices=None, help='(float, default=0) final
+      wd, =twde or twd', metavar=None)
+    --tclip: _StoreAction(option_strings=['--tclip'], dest='tclip', nargs=None, const=None,
+      default=2.0, type=<class 'float'>, choices=None, help='(float, default=2.0)
+      <=0 for not using grad clip', metavar=None)
+    --ls: _StoreAction(option_strings=['--ls'], dest='ls', nargs=None, const=None,
+      default=0.0, type=<class 'float'>, choices=None, help='(float, default=0.0)
+      label smooth', metavar=None)
+    --bs: _StoreAction(option_strings=['--bs'], dest='bs', nargs=None, const=None,
+      default=32, type=<class 'int'>, choices=None, help='(int, default=32) global
+      batch size', metavar=None)
+    --batch_size: _StoreAction(option_strings=['--batch_size'], dest='batch_size',
+      nargs=None, const=None, default=0, type=<class 'int'>, choices=None, help="(int,
+      default=0) [automatically set; don't specify this] batch size per GPU = round(args.bs
+      / args.ac / dist.get_world_size() / 8) * 8", metavar=None)
+    --glb_batch_size: _StoreAction(option_strings=['--glb_batch_size'], dest='glb_batch_size',
+      nargs=None, const=None, default=0, type=<class 'int'>, choices=None, help="(int,
+      default=0) [automatically set; don't specify this] global batch size = args.batch_size
+      * dist.get_world_size()", metavar=None)
+    --ac: _StoreAction(option_strings=['--ac'], dest='ac', nargs=None, const=None,
+      default=1, type=<class 'int'>, choices=None, help='(int, default=1) gradient
+      accumulation', metavar=None)
+    --ep: _StoreAction(option_strings=['--ep'], dest='ep', nargs=None, const=None,
+      default=250, type=<class 'int'>, choices=None, help='(int, default=250) ', metavar=None)
+    --wp: _StoreAction(option_strings=['--wp'], dest='wp', nargs=None, const=None,
+      default=0, type=<class 'float'>, choices=None, help='(float, default=0) ', metavar=None)
+    --wp0: _StoreAction(option_strings=['--wp0'], dest='wp0', nargs=None, const=None,
+      default=0.005, type=<class 'float'>, choices=None, help='(float, default=0.005)
+      initial lr ratio at the begging of lr warm up', metavar=None)
+    --wpe: _StoreAction(option_strings=['--wpe'], dest='wpe', nargs=None, const=None,
+      default=0.01, type=<class 'float'>, choices=None, help='(float, default=0.01)
+      final lr ratio at the end of training', metavar=None)
+    --sche: _StoreAction(option_strings=['--sche'], dest='sche', nargs=None, const=None,
+      default='lin0', type=<class 'str'>, choices=None, help='(str, default=lin0)
+      lr schedule', metavar=None)
+    --opt: '_StoreAction(option_strings=[''--opt''], dest=''opt'', nargs=None, const=None,
+      default=''adamw'', type=<class ''str''>, choices=None, help=''(str, default=adamw)
+      lion: https://cloud.tencent.com/developer/article/2336657?areaId=106001 lr=5e-5
+      (0.25x) wd=0.8 (8x); Lion needs a large bs to work'', metavar=None)'
+    --afuse: _StoreAction(option_strings=['--afuse'], dest='afuse', nargs=None, const=None,
+      default=True, type=<function boolean_type at 0x7fcab1845ca0>, choices=[True,
+      False], help='(bool, default=True) fused adamw', metavar=None)
+    --saln: _StoreAction(option_strings=['--saln'], dest='saln', nargs=None, const=None,
+      default=False, type=<function boolean_type at 0x7fcab1845ca0>, choices=[True,
+      False], help='(bool, default=False) whether to use shared adaln', metavar=None)
+    --anorm: _StoreAction(option_strings=['--anorm'], dest='anorm', nargs=None, const=None,
+      default=True, type=<function boolean_type at 0x7fcab1845ca0>, choices=[True,
+      False], help='(bool, default=True) whether to use L2 normalized attention',
+      metavar=None)
+    --fuse: _StoreAction(option_strings=['--fuse'], dest='fuse', nargs=None, const=None,
+      default=True, type=<function boolean_type at 0x7fcab1845ca0>, choices=[True,
+      False], help='(bool, default=True) whether to use fused op like flash attn,
+      xformers, fused MLP, fused LayerNorm, etc.', metavar=None)
+    --pn: _StoreAction(option_strings=['--pn'], dest='pn', nargs=None, const=None,
+      default='1_2_3_4_5_6_8_10_13_16', type=<class 'str'>, choices=None, help='(str,
+      default=1_2_3_4_5_6_8_10_13_16) ', metavar=None)
+    --patch_size: _StoreAction(option_strings=['--patch_size'], dest='patch_size',
+      nargs=None, const=None, default=16, type=<class 'int'>, choices=None, help='(int,
+      default=16) ', metavar=None)
+    --patch_nums: _StoreAction(option_strings=['--patch_nums'], dest='patch_nums',
+      nargs='*', const=None, default=None, type=<class 'str'>, choices=None, help="(tuple,
+      default=None) [automatically set; don't specify this] = tuple(map(int, args.pn.replace('-',
+      '_').split('_')))", metavar=None)
+    --resos: _StoreAction(option_strings=['--resos'], dest='resos', nargs='*', const=None,
+      default=None, type=<class 'str'>, choices=None, help="(tuple, default=None)
+      [automatically set; don't specify this] = tuple(pn * args.patch_size for pn
+      in args.patch_nums)", metavar=None)
+    --data_load_reso: _StoreAction(option_strings=['--data_load_reso'], dest='data_load_reso',
+      nargs=None, const=None, default=None, type=<class 'int'>, choices=None, help="(int,
+      default=None) [automatically set; don't specify this] would be max(patch_nums)
+      * patch_size", metavar=None)
+    --mid_reso: '_StoreAction(option_strings=[''--mid_reso''], dest=''mid_reso'',
+      nargs=None, const=None, default=1.125, type=<class ''float''>, choices=None,
+      help=''(float, default=1.125) aug: first resize to mid_reso = 1.125 * data_load_reso,
+      then crop to data_load_reso'', metavar=None)'
+    --hflip: '_StoreAction(option_strings=[''--hflip''], dest=''hflip'', nargs=None,
+      const=None, default=False, type=<function boolean_type at 0x7fcab1845ca0>, choices=[True,
+      False], help=''(bool, default=False) augmentation: horizontal flip'', metavar=None)'
+    --workers: '_StoreAction(option_strings=[''--workers''], dest=''workers'', nargs=None,
+      const=None, default=0, type=<class ''int''>, choices=None, help="(int, default=0)
+      num workers; 0: auto, -1: don''t use multiprocessing in DataLoader", metavar=None)'
+    --pg: _StoreAction(option_strings=['--pg'], dest='pg', nargs=None, const=None,
+      default=0.0, type=<class 'float'>, choices=None, help='(float, default=0.0)
+      >0 for use progressive training during [0%, this] of training', metavar=None)
+    --pg0: '_StoreAction(option_strings=[''--pg0''], dest=''pg0'', nargs=None, const=None,
+      default=4, type=<class ''int''>, choices=None, help=''(int, default=4) progressive
+      initial stage, 0: from the 1st token map, 1: from the 2nd token map, etc'',
+      metavar=None)'
+    --pgwp: _StoreAction(option_strings=['--pgwp'], dest='pgwp', nargs=None, const=None,
+      default=0, type=<class 'float'>, choices=None, help='(float, default=0) num
+      of warmup epochs at each progressive stage', metavar=None)
+    --cmd: _StoreAction(option_strings=['--cmd'], dest='cmd', nargs=None, const=None,
+      default='--data_path /home/dwang/sci/ImageNet/ILSVRC/Data/CLS-LOC_mini/', type=<class
+      'str'>, choices=None, help="(str, default=--data_path /home/dwang/sci/ImageNet/ILSVRC/Data/CLS-LOC_mini/)
+      [automatically set; don't specify this]", metavar=None)
+    --branch: _StoreAction(option_strings=['--branch'], dest='branch', nargs=None,
+      const=None, default='main', type=<class 'str'>, choices=None, help="(str, default=main)
+      [automatically set; don't specify this]", metavar=None)
+    --commit_id: _StoreAction(option_strings=['--commit_id'], dest='commit_id', nargs=None,
+      const=None, default='0dbf2b5c7f1c9d4ddcbd69b4945efb4298cb17ec', type=<class
+      'str'>, choices=None, help="(str, default=0dbf2b5c7f1c9d4ddcbd69b4945efb4298cb17ec)
+      [automatically set; don't specify this]", metavar=None)
+    --commit_msg: _StoreAction(option_strings=['--commit_msg'], dest='commit_msg',
+      nargs=None, const=None, default='wandb', type=<class 'str'>, choices=None, help="(str,
+      default=wandb) [automatically set; don't specify this]", metavar=None)
+    --acc_mean: _StoreAction(option_strings=['--acc_mean'], dest='acc_mean', nargs=None,
+      const=None, default=None, type=<class 'float'>, choices=None, help="(float,
+      default=None) [automatically set; don't specify this]", metavar=None)
+    --acc_tail: _StoreAction(option_strings=['--acc_tail'], dest='acc_tail', nargs=None,
+      const=None, default=None, type=<class 'float'>, choices=None, help="(float,
+      default=None) [automatically set; don't specify this]", metavar=None)
+    --L_mean: _StoreAction(option_strings=['--L_mean'], dest='L_mean', nargs=None,
+      const=None, default=None, type=<class 'float'>, choices=None, help="(float,
+      default=None) [automatically set; don't specify this]", metavar=None)
+    --L_tail: _StoreAction(option_strings=['--L_tail'], dest='L_tail', nargs=None,
+      const=None, default=None, type=<class 'float'>, choices=None, help="(float,
+      default=None) [automatically set; don't specify this]", metavar=None)
+    --vacc_mean: _StoreAction(option_strings=['--vacc_mean'], dest='vacc_mean', nargs=None,
+      const=None, default=None, type=<class 'float'>, choices=None, help="(float,
+      default=None) [automatically set; don't specify this]", metavar=None)
+    --vacc_tail: _StoreAction(option_strings=['--vacc_tail'], dest='vacc_tail', nargs=None,
+      const=None, default=None, type=<class 'float'>, choices=None, help="(float,
+      default=None) [automatically set; don't specify this]", metavar=None)
+    --vL_mean: _StoreAction(option_strings=['--vL_mean'], dest='vL_mean', nargs=None,
+      const=None, default=None, type=<class 'float'>, choices=None, help="(float,
+      default=None) [automatically set; don't specify this]", metavar=None)
+    --vL_tail: _StoreAction(option_strings=['--vL_tail'], dest='vL_tail', nargs=None,
+      const=None, default=None, type=<class 'float'>, choices=None, help="(float,
+      default=None) [automatically set; don't specify this]", metavar=None)
+    --grad_norm: _StoreAction(option_strings=['--grad_norm'], dest='grad_norm', nargs=None,
+      const=None, default=None, type=<class 'float'>, choices=None, help="(float,
+      default=None) [automatically set; don't specify this]", metavar=None)
+    --cur_lr: _StoreAction(option_strings=['--cur_lr'], dest='cur_lr', nargs=None,
+      const=None, default=None, type=<class 'float'>, choices=None, help="(float,
+      default=None) [automatically set; don't specify this]", metavar=None)
+    --cur_wd: _StoreAction(option_strings=['--cur_wd'], dest='cur_wd', nargs=None,
+      const=None, default=None, type=<class 'float'>, choices=None, help="(float,
+      default=None) [automatically set; don't specify this]", metavar=None)
+    --cur_it: _StoreAction(option_strings=['--cur_it'], dest='cur_it', nargs=None,
+      const=None, default='', type=<class 'str'>, choices=None, help="(str, default=)
+      [automatically set; don't specify this]", metavar=None)
+    --cur_ep: _StoreAction(option_strings=['--cur_ep'], dest='cur_ep', nargs=None,
+      const=None, default='', type=<class 'str'>, choices=None, help="(str, default=)
+      [automatically set; don't specify this]", metavar=None)
+    --remain_time: _StoreAction(option_strings=['--remain_time'], dest='remain_time',
+      nargs=None, const=None, default='', type=<class 'str'>, choices=None, help="(str,
+      default=) [automatically set; don't specify this]", metavar=None)
+    --finish_time: _StoreAction(option_strings=['--finish_time'], dest='finish_time',
+      nargs=None, const=None, default='', type=<class 'str'>, choices=None, help="(str,
+      default=) [automatically set; don't specify this]", metavar=None)
+    --local_out_dir_path: _StoreAction(option_strings=['--local_out_dir_path'], dest='local_out_dir_path',
+      nargs=None, const=None, default='/home/dwang/vton/VAR/local_output', type=<class
+      'str'>, choices=None, help="(str, default=/home/dwang/vton/VAR/local_output)
+      [automatically set; don't specify this]", metavar=None)
+    --tb_log_dir_path: _StoreAction(option_strings=['--tb_log_dir_path'], dest='tb_log_dir_path',
+      nargs=None, const=None, default='...tb-...', type=<class 'str'>, choices=None,
+      help="(str, default=...tb-...) [automatically set; don't specify this]", metavar=None)
+    --log_txt_path: _StoreAction(option_strings=['--log_txt_path'], dest='log_txt_path',
+      nargs=None, const=None, default='...', type=<class 'str'>, choices=None, help="(str,
+      default=...) [automatically set; don't specify this]", metavar=None)
+    --last_ckpt_path: _StoreAction(option_strings=['--last_ckpt_path'], dest='last_ckpt_path',
+      nargs=None, const=None, default='...', type=<class 'str'>, choices=None, help="(str,
+      default=...) [automatically set; don't specify this]", metavar=None)
+    --tf32: _StoreAction(option_strings=['--tf32'], dest='tf32', nargs=None, const=None,
+      default=True, type=<function boolean_type at 0x7fcab1845ca0>, choices=[True,
+      False], help='(bool, default=True) whether to use TensorFloat32', metavar=None)
+    --device: _StoreAction(option_strings=['--device'], dest='device', nargs=None,
+      const=None, default='cpu', type=<class 'str'>, choices=None, help="(str, default=cpu)
+      [automatically set; don't specify this]", metavar=None)
+    --seed: _StoreAction(option_strings=['--seed'], dest='seed', nargs=None, const=None,
+      default=None, type=<class 'int'>, choices=None, help='(int, default=None) seed',
+      metavar=None)
+    --same_seed_for_all_ranks: _StoreAction(option_strings=['--same_seed_for_all_ranks'],
+      dest='same_seed_for_all_ranks', nargs=None, const=None, default=0, type=<class
+      'int'>, choices=None, help='(int, default=0) this is only for distributed sampler',
+      metavar=None)
+    --local_debug: _StoreAction(option_strings=['--local_debug'], dest='local_debug',
+      nargs=None, const=None, default=False, type=<function boolean_type at 0x7fcab1845ca0>,
+      choices=[True, False], help='(bool, default=False) ', metavar=None)
+    --dbg_nan: _StoreAction(option_strings=['--dbg_nan'], dest='dbg_nan', nargs=None,
+      const=None, default=False, type=<function boolean_type at 0x7fcab1845ca0>, choices=[True,
+      False], help="(bool, default=False) 'KEVIN_LOCAL' in os.environ", metavar=None)
+    -h: _HelpAction(option_strings=['-h', '--help'], dest='help', nargs=0, const=None,
+      default='==SUPPRESS==', type=None, choices=None, help='show this help message
+      and exit', metavar=None)
+    --help: _HelpAction(option_strings=['-h', '--help'], dest='help', nargs=0, const=None,
+      default='==SUPPRESS==', type=None, choices=None, help='show this help message
+      and exit', metavar=None)
+_action_groups:
+  desc: null
+  value:
+  - <argparse._ArgumentGroup object at 0x7fca381fe310>
+  - <argparse._ArgumentGroup object at 0x7fca381fe430>
+_mutually_exclusive_groups:
+  desc: null
+  value: []
+_defaults:
+  desc: null
+  value: {}
+_negative_number_matcher:
+  desc: null
+  value: re.compile('^-\\d+$|^-\\d*\\.\\d+$')
+_has_negative_number_optionals:
+  desc: null
+  value: []
+prog:
+  desc: null
+  value: train.py
+usage:
+  desc: null
+  value: null
+epilog:
+  desc: null
+  value: null
+formatter_class:
+  desc: null
+  value: argparse.HelpFormatter
+fromfile_prefix_chars:
+  desc: null
+  value: null
+add_help:
+  desc: null
+  value: true
+allow_abbrev:
+  desc: null
+  value: true
+_positionals:
+  desc: null
+  value: <argparse._ArgumentGroup object at 0x7fca381fe310>
+_optionals:
+  desc: null
+  value: <argparse._ArgumentGroup object at 0x7fca381fe430>
+_subparsers:
+  desc: null
+  value: null
+args_from_configs:
+  desc: null
+  value: []
+data_path:
+  desc: null
+  value: /home/dwang/sci/ImageNet/ILSVRC/Data/CLS-LOC_mini/
+data_list:
+  desc: null
+  value: subtrain_1.txt
+exp_name:
+  desc: null
+  value: text
+vfast:
+  desc: null
+  value: 0
+tfast:
+  desc: null
+  value: 0
+depth:
+  desc: null
+  value: 16
+ini:
+  desc: null
+  value: -1
+hd:
+  desc: null
+  value: 0.02
+aln:
+  desc: null
+  value: 0.5
+alng:
+  desc: null
+  value: 1.0e-05
+fp16:
+  desc: null
+  value: 0
+tblr:
+  desc: null
+  value: 0.0001
+tlr:
+  desc: null
+  value: 1.25e-05
+twd:
+  desc: null
+  value: 0.05
+twde:
+  desc: null
+  value: 0.05
+tclip:
+  desc: null
+  value: 2.0
+ls:
+  desc: null
+  value: 0.0
+bs:
+  desc: null
+  value: 32
+batch_size:
+  desc: null
+  value: 32
+glb_batch_size:
+  desc: null
+  value: 32
+ac:
+  desc: null
+  value: 1
+ep:
+  desc: null
+  value: 250
+wp:
+  desc: null
+  value: 5.0
+wp0:
+  desc: null
+  value: 0.005
+wpe:
+  desc: null
+  value: 0.01
+sche:
+  desc: null
+  value: lin0
+opt:
+  desc: null
+  value: adamw
+afuse:
+  desc: null
+  value: true
+saln:
+  desc: null
+  value: false
+anorm:
+  desc: null
+  value: true
+fuse:
+  desc: null
+  value: true
+pn:
+  desc: null
+  value: '1_2_3_4_5_6_8_10_13_16'
+patch_size:
+  desc: null
+  value: 16
+patch_nums:
+  desc: null
+  value:
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 8
+  - 10
+  - 13
+  - 16
+resos:
+  desc: null
+  value:
+  - 16
+  - 32
+  - 48
+  - 64
+  - 80
+  - 96
+  - 128
+  - 160
+  - 208
+  - 256
+data_load_reso:
+  desc: null
+  value: 256
+mid_reso:
+  desc: null
+  value: 1.125
+hflip:
+  desc: null
+  value: false
+workers:
+  desc: null
+  value: 0
+pg:
+  desc: null
+  value: 0.0
+pg0:
+  desc: null
+  value: 4
+pgwp:
+  desc: null
+  value: 0.8333333333333334
+cmd:
+  desc: null
+  value: --data_path /home/dwang/sci/ImageNet/ILSVRC/Data/CLS-LOC_mini/
+branch:
+  desc: null
+  value: main
+commit_id:
+  desc: null
+  value: 0dbf2b5c7f1c9d4ddcbd69b4945efb4298cb17ec
+commit_msg:
+  desc: null
+  value: wandb
+acc_mean:
+  desc: null
+  value: null
+acc_tail:
+  desc: null
+  value: null
+L_mean:
+  desc: null
+  value: null
+L_tail:
+  desc: null
+  value: null
+vacc_mean:
+  desc: null
+  value: null
+vacc_tail:
+  desc: null
+  value: null
+vL_mean:
+  desc: null
+  value: null
+vL_tail:
+  desc: null
+  value: null
+grad_norm:
+  desc: null
+  value: null
+cur_lr:
+  desc: null
+  value: null
+cur_wd:
+  desc: null
+  value: null
+cur_it:
+  desc: null
+  value: ''
+cur_ep:
+  desc: null
+  value: ''
+remain_time:
+  desc: null
+  value: ''
+finish_time:
+  desc: null
+  value: ''
+local_out_dir_path:
+  desc: null
+  value: /home/dwang/vton/VAR/local_output
+tb_log_dir_path:
+  desc: null
+  value: /home/dwang/vton/VAR/local_output/tb-VARd16__pn1_2_3_4_5_6_8_10_13_16__b32ep250adamlr0.0001wd0.05
+log_txt_path:
+  desc: null
+  value: /home/dwang/vton/VAR/local_output/log.txt
+last_ckpt_path:
+  desc: null
+  value: /home/dwang/vton/VAR/local_output/ar-ckpt-last.pth
+tf32:
+  desc: null
+  value: true
+device:
+  desc: null
+  value: cuda:0
+seed:
+  desc: null
+  value: null
+same_seed_for_all_ranks:
+  desc: null
+  value: 0
+local_debug:
+  desc: null
+  value: false
+dbg_nan:
+  desc: null
+  value: false
+_wandb:
+  desc: null
+  value:
+    python_version: 3.8.13
+    cli_version: 0.17.4
+    framework: huggingface
+    huggingface_version: 4.41.2
+    is_jupyter_run: false
+    is_kaggle_kernel: true
+    start_time: 1720801356
+    t:
+      1:
+      - 1
+      - 11
+      - 41
+      - 49
+      - 55
+      - 105
+      2:
+      - 1
+      - 5
+      - 11
+      - 41
+      - 49
+      - 53
+      - 55
+      - 105
+      3:
+      - 16
+      - 23
+      - 24
+      - 37
+      4: 3.8.13
+      5: 0.17.4
+      6: 4.41.2
+      8:
+      - 2
+      - 5
+      13: linux-x86_64

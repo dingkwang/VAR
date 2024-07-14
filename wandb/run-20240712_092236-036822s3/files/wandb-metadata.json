@@ -1,0 +1,91 @@
+{
+    "os": "Linux-5.15.0-113-generic-x86_64-with-glibc2.2.5",
+    "python": "3.8.13",
+    "heartbeatAt": "2024-07-12T16:22:37.614630",
+    "startedAt": "2024-07-12T16:22:36.649154",
+    "docker": null,
+    "cuda": null,
+    "args": [
+        "--data_path",
+        "/home/dwang/sci/ImageNet/ILSVRC/Data/CLS-LOC_mini/"
+    ],
+    "state": "running",
+    "program": "train.py",
+    "codePathLocal": "train.py",
+    "codePath": "train.py",
+    "git": {
+        "remote": "git@github.com:dingkwang/VAR.git",
+        "commit": "0dbf2b5c7f1c9d4ddcbd69b4945efb4298cb17ec"
+    },
+    "email": "wangdk93",
+    "root": "/home/dwang/vton/VAR",
+    "host": "r2d2",
+    "username": "dwang",
+    "executable": "/opt/aeva/eve_py3env/bin/python",
+    "cpu_count": 8,
+    "cpu_count_logical": 8,
+    "cpu_freq": {
+        "current": 3324.555875,
+        "min": 800.0,
+        "max": 4900.0
+    },
+    "cpu_freq_per_core": [
+        {
+            "current": 3057.189,
+            "min": 800.0,
+            "max": 4900.0
+        },
+        {
+            "current": 2906.526,
+            "min": 800.0,
+            "max": 4900.0
+        },
+        {
+            "current": 3600.0,
+            "min": 800.0,
+            "max": 4900.0
+        },
+        {
+            "current": 3600.0,
+            "min": 800.0,
+            "max": 4900.0
+        },
+        {
+            "current": 3600.0,
+            "min": 800.0,
+            "max": 4900.0
+        },
+        {
+            "current": 3600.0,
+            "min": 800.0,
+            "max": 4900.0
+        },
+        {
+            "current": 3600.0,
+            "min": 800.0,
+            "max": 4900.0
+        },
+        {
+            "current": 2945.593,
+            "min": 800.0,
+            "max": 4900.0
+        }
+    ],
+    "disk": {
+        "/": {
+            "total": 1876.218734741211,
+            "used": 1493.2927322387695
+        }
+    },
+    "gpu": "NVIDIA RTX A6000",
+    "gpu_count": 1,
+    "gpu_devices": [
+        {
+            "name": "NVIDIA RTX A6000",
+            "memory_total": 51527024640
+        }
+    ],
+    "memory": {
+        "total": 62.69554901123047
+    }
+}
