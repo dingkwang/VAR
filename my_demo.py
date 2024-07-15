@@ -58,7 +58,7 @@ torch.manual_seed(seed)
 # num_sampling_steps = 250 #@param {type:"slider", min:0, max:1000, step:1}
 cfg = 1 #@param {type:"slider", min:1, max:10, step:0.1}
 # class_labels = (980, 980, 437, 437, 22, 22, 562, 562)  #@param {type:"raw"}
-class_labels = [834]*8
+class_labels = [0]*8
 more_smooth = False # True for more smooth output
 
 # seed

@@ -25,21 +25,22 @@ import dist
 
 class Args(Tap):
     data_path: str = '/path/to/imagenet'
-    data_list: str = "subtrain_1.txt"
+    data_list: str = "subtrain_0.1.txt"
+    val_data_list: str = "subtrain_1.txt"
     exp_name: str = 'text'
 
     # VAE
     vfast: int = 0  # torch.compile VAE; =0: not compile; 1: compile with 'reduce-overhead'; 2: compile with 'max-autotune'
     # VAR
     tfast: int = 0  # torch.compile VAR; =0: not compile; 1: compile with 'reduce-overhead'; 2: compile with 'max-autotune'
-    depth: int = 16  # VAR depth
+    depth: int = 30  # VAR depth {}
     # VAR initialization
     ini: float = -1  # -1: automated model parameter initialization
     hd: float = 0.02  # head.w *= hd
     aln: float = 0.5  # the multiplier of ada_lin.w's initialization
     alng: float = 1e-5  # the multiplier of ada_lin.w[gamma channels]'s initialization
     # VAR optimization
-    fp16: int = 0  # 1: using fp16, 2: bf16
+    fp16: int = 2 # 1: using fp16, 2: bf16
     tblr: float = 1e-4  # base lr
     tlr: float = None  # lr = base lr * (bs / 256)
     twd: float = 0.05  # initial wd
@@ -47,13 +48,14 @@ class Args(Tap):
     tclip: float = 2.  # <=0 for not using grad clip
     ls: float = 0.0  # label smooth
 
-    bs: int = 32  # global batch size
+    num_classes: int = 1
+    bs: int = 2  # global batch size
     batch_size: int = 0  # [automatically set; don't specify this] batch size per GPU = round(args.bs / args.ac / dist.get_world_size() / 8) * 8
     glb_batch_size: int = 0  # [automatically set; don't specify this] global batch size = args.batch_size * dist.get_world_size()
     ac: int = 1  # gradient accumulation
 
     ep: int = 250
-    val_every: int = 2
+    val_every: int = 10
     wp: float = 0
     wp0: float = 0.005  # initial lr ratio at the begging of lr warm up
     wpe: float = 0.01  # final lr ratio at the end of training

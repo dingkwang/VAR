@@ -68,7 +68,7 @@ class VARTrainer(object):
         self.first_prog = True
 
     @torch.no_grad()
-    def eval_ep(self, ld_val: DataLoader):
+    def eval_ep(self, ld_val: DataLoader, ep = None):
         print("Running evaludation")
 
         tot = 0
@@ -80,7 +80,7 @@ class VARTrainer(object):
             if isinstance(batch_data, dict):
                 inp_B3HW = batch_data["image"]
                 batch_size = inp_B3HW.shape[0]
-                label_B = torch.tensor([834] * batch_size)
+                label_B = torch.tensor([0] * batch_size)
                 inp_B3HW = (inp_B3HW - 0.5) * 2.0
             else:
                 inp_B3HW, label_B = batch_data
@@ -111,12 +111,6 @@ class VARTrainer(object):
                                                                           top_p=0.95,
                                                                           g_seed=0,
                                                                           more_smooth=False)
-            chw = torchvision.utils.make_grid(recon_B3HW, nrow=8, padding=0, pad_value=1.0)
-            chw = chw.permute(1, 2, 0).mul_(255).cpu().numpy()
-            # chw = PImage.fromarray(chw.astype(np.uint8))
-            # now = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-            # fn = f'val_output_{now}.png'
-            # chw.save(fn)
             if self.logger is not None:
                 formatted_images = []
                 for i in range(inp_B3HW.shape[0]):
@@ -124,7 +118,7 @@ class VARTrainer(object):
                     formatted_images.append(wandb.Image(transform(gt.cpu()), caption=f"GT/{label_B[i]}"))
                     recon_img = recon_B3HW[i]
                     formatted_images.append(wandb.Image(transform(recon_img.cpu()),caption=f"reconstruct/{label_B[i]}"))
-                self.logger.log({"validation": formatted_images})
+                self.logger.log({"validation": formatted_images, "epoch": ep})
 
         self.var_wo_ddp.train(training)
 

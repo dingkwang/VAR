@@ -79,10 +79,10 @@ def build_everything(args: arg_util.Args):
                     start_it=start_it,
                 ),
             ))
-            ld_dataset = CPDataset(args.data_pat,
+            ld_dataset = CPDataset(args.data_path,
                                 256,
                                 mode="train",
-                                data_list=args.data_list)
+                                data_list=args.val_data_list)
             iters_train = math.ceil(len(train_dataset) / args.bs)
             ld_val = torch.utils.data.DataLoader(
                     ld_dataset,
@@ -94,9 +94,9 @@ def build_everything(args: arg_util.Args):
                     shuffle=False,
                     drop_last=False,
                 )
+            num_classes = args.num_classes
         except Exception as e:
             print(e)
-
             num_classes, dataset_train, dataset_val = build_dataset(
                 args.data_path,
                 final_reso=args.data_load_reso,
@@ -339,7 +339,7 @@ def main_training():
             print("val_and_also_saving")
 
             val_loss_mean, val_loss_tail, val_acc_mean, val_acc_tail, tot, cost = trainer.eval_ep(
-                ld_val)
+                ld_val, ep = ep)
             best_updated = best_val_loss_tail > val_loss_tail
             best_val_loss_mean, best_val_loss_tail = min(best_val_loss_mean, val_loss_mean), min(
                 best_val_loss_tail, val_loss_tail)
@@ -395,8 +395,8 @@ def main_training():
                                                             time.localtime(time.time() - 60))
     print(f'final args:\n\n{str(args)}')
     args.dump_log()
-    tb_lg.flush()
-    tb_lg.close()
+    # tb_lg.flush()
+    # tb_lg.close()
     dist.barrier()
 
 
@@ -434,11 +434,12 @@ def train_one_ep(ep: int, is_first_ep: bool, start_it: int, args: arg_util.Args,
             continue
         if is_first_ep and it == start_it:
             warnings.resetwarnings()
+
         if isinstance(data, dict):
             inp = data["image"]
             batch_size = inp.shape[0]
             inp = (inp - 0.5) * 2.0
-            label = torch.tensor([834] * batch_size)  # 834 suit, suit of clothes
+            label = torch.tensor([0] * batch_size)  # 0 single class
         else:
             inp, label = data
         inp = inp.to(args.device, non_blocking=True)
@@ -490,15 +491,15 @@ def train_one_ep(ep: int, is_first_ep: bool, start_it: int, args: arg_util.Args,
 
         me.update(tlr=max_tlr)
         # tb_lg.set_step(step=g_it)
-        tb_lg.log({'AR_opt_lr/lr_min':min_tlr})
+        tb_lg.log({'AR_opt_lr/lr_min': min_tlr})
         tb_lg.log({'AR_opt_lr/lr_max': max_tlr})
-        tb_lg.log({'AR_opt_wd/wd_max':max_twd})
-        tb_lg.log({'AR_opt_wd/wd_min':min_twd})
-        tb_lg.log({'AR_opt_grad/fp16':scale_log2})
+        tb_lg.log({'AR_opt_wd/wd_max': max_twd})
+        tb_lg.log({'AR_opt_wd/wd_min': min_twd})
+        tb_lg.log({'AR_opt_grad/fp16': scale_log2})
 
         if args.tclip > 0:
-            tb_lg.log({'AR_opt_grad/grad':grad_norm})
-            tb_lg.log({'AR_opt_grad/grad':args.tclip})
+            tb_lg.log({'AR_opt_grad/grad': grad_norm})
+            tb_lg.log({'AR_opt_grad/grad': args.tclip})
 
     me.synchronize_between_processes()
     return {
