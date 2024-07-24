@@ -1,5 +1,6 @@
 import datetime
 import time
+from turtle import forward
 from typing import List, Optional, Tuple, Union
 from numpy import isin
 import numpy as np
@@ -38,14 +39,16 @@ class VARTrainer(object):
                  var: DDP,
                  var_opt: AmpOptimizer,
                  label_smooth: float,
-                 logger=None):
+                 logger=None,
+                 cond_train=False,
+                 ):
         super(VARTrainer, self).__init__()
         self.logger = logger
         self.var, self.vae_local, self.quantize_local = var, vae_local, vae_local.quantize
         self.quantize_local: VectorQuantizer2
         self.var_wo_ddp: VAR = var_wo_ddp  # after torch.compile
         self.var_opt = var_opt
-
+        self.cond_train = cond_train
         del self.var_wo_ddp.rng
         self.var_wo_ddp.rng = torch.Generator(device=device)
 
@@ -68,7 +71,7 @@ class VARTrainer(object):
         self.first_prog = True
 
     @torch.no_grad()
-    def eval_ep(self, ld_val: DataLoader, ep = None):
+    def eval_ep(self, ld_val: DataLoader, ep=None):
         print("Running evaludation")
 
         tot = 0
@@ -79,21 +82,31 @@ class VARTrainer(object):
         for batch_data in tqdm(ld_val):
             if isinstance(batch_data, dict):
                 inp_B3HW = batch_data["image"]
-                batch_size = inp_B3HW.shape[0]
-                label_B = torch.tensor([0] * batch_size)
-                inp_B3HW = (inp_B3HW - 0.5) * 2.0
+                label_B = batch_data["label"]
+                inpaint_B3HW = batch_data["inpaint_image"]
+                cloth_B3HW = batch_data["cloth_pure"]
             else:
                 inp_B3HW, label_B = batch_data
             B, V = label_B.shape[0], self.vae_local.vocab_size
             inp_B3HW = inp_B3HW.to(dist.get_device(), non_blocking=True)
             label_B = label_B.to(dist.get_device(), non_blocking=True)
 
-            gt_idx_Bl: List[ITen] = self.vae_local.img_to_idxBl(inp_B3HW)
+            if self.cond_train:
+                inpaint_B3HW = inpaint_B3HW.to(dist.get_device(), non_blocking=True)
+                cloth_B3HW = cloth_B3HW.to(dist.get_device(), non_blocking=True)
+
+            gt_idx_Bl: List[ITen] = self.vae_local.img_to_idxBl(inp_B3HW)  # [(B, patch)] * 10
+            inpaint_idx_Bl: List[ITen] = self.vae_local.img_to_idxBl(inpaint_B3HW)
+            cloth_idx_Bl = self.vae_local.img_to_idxBl(cloth_B3HW)
+
             gt_BL = torch.cat(gt_idx_Bl, dim=1)
             x_BLCv_wo_first_l: Ten = self.quantize_local.idxBl_to_var_input(gt_idx_Bl)
+            if self.cond_train:
+                inpaint_BLCv: Ten = self.quantize_local.idxBl_to_var_input(inpaint_idx_Bl)
+                cloth_BLCv: Ten = self.quantize_local.idxBl_to_var_input(cloth_idx_Bl)
 
             self.var_wo_ddp.forward
-            logits_BLV = self.var_wo_ddp(label_B, x_BLCv_wo_first_l)
+            logits_BLV = self.var_wo_ddp.forward(label_B, x_BLCv_wo_first_l)
             L_mean += self.val_loss(logits_BLV.data.view(-1, V), gt_BL.view(-1)) * B
             L_tail += self.val_loss(logits_BLV.data[:, -self.last_l:].reshape(-1, V),
                                     gt_BL[:, -self.last_l:].reshape(-1)) * B
@@ -101,6 +114,7 @@ class VARTrainer(object):
             acc_tail += (logits_BLV.data[:, -self.last_l:].argmax(dim=-1)
                          == gt_BL[:, -self.last_l:]).sum() * (100 / self.last_l)
             tot += B
+            # added validation 
             with torch.inference_mode():
                 with torch.autocast('cuda', enabled=True, dtype=torch.float16,
                                     cache_enabled=True):  # using bfloat16 can be faster
@@ -117,14 +131,13 @@ class VARTrainer(object):
                     gt = (inp_B3HW[i] + 1) / 2
                     formatted_images.append(wandb.Image(transform(gt.cpu()), caption=f"GT/{label_B[i]}"))
                     recon_img = recon_B3HW[i]
-                    formatted_images.append(wandb.Image(transform(recon_img.cpu()),caption=f"reconstruct/{label_B[i]}"))
+                    formatted_images.append(wandb.Image(transform(recon_img.cpu()),
+                                                        caption=f"reconstruct/{label_B[i]}"))
                 self.logger.log({"validation": formatted_images, "epoch": ep})
 
         self.var_wo_ddp.train(training)
 
-        stats = L_mean.new_tensor(
-            [L_mean.item(), L_tail.item(),
-             acc_mean.item(), acc_tail.item(), tot])
+        stats = L_mean.new_tensor([L_mean.item(), L_tail.item(), acc_mean.item(), acc_tail.item(), tot])
         dist.allreduce(stats)
         tot = round(stats[-1].item())
         stats /= tot
@@ -192,8 +205,7 @@ class VARTrainer(object):
             else:  # not in progressive training
                 Ltail = self.val_loss(logits_BLV.data[:, -self.last_l:].reshape(-1, V),
                                       gt_BL[:, -self.last_l:].reshape(-1)).item()
-                acc_tail = (pred_BL[:, -self.last_l:]
-                            == gt_BL[:, -self.last_l:]).float().mean().item() * 100
+                acc_tail = (pred_BL[:, -self.last_l:] == gt_BL[:, -self.last_l:]).float().mean().item() * 100
             grad_norm = grad_norm.item()
             metric_lg.update(Lm=Lmean, Lt=Ltail, Accm=acc_mean, Acct=acc_tail, tnm=grad_norm)
 
@@ -211,8 +223,7 @@ class VARTrainer(object):
                 for si, (bg, ed) in enumerate(self.begin_ends):
                     if 0 <= prog_si < si:
                         break
-                    pred, tar = logits_BLV.data[:, bg:ed].reshape(-1, V), gt_BL[:,
-                                                                                bg:ed].reshape(-1)
+                    pred, tar = logits_BLV.data[:, bg:ed].reshape(-1, V), gt_BL[:, bg:ed].reshape(-1)
                     acc = (pred.argmax(dim=-1) == tar).float().mean().item() * 100
                     ce = self.val_loss(pred, tar).item()
                     kw[f'acc_{self.resos[si]}'] = acc

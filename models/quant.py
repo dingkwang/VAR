@@ -70,7 +70,7 @@ class VectorQuantizer2(nn.Module):
                     idx_N = torch.argmax(rest_NC @ F.normalize(self.embedding.weight.data.T, dim=0), dim=1)
                 else:
                     rest_NC = F.interpolate(f_rest, size=(pn, pn), mode='area').permute(0, 2, 3, 1).reshape(-1, C) if (si != SN-1) else f_rest.permute(0, 2, 3, 1).reshape(-1, C)
-                    d_no_grad = torch.sum(rest_NC.square(), dim=1, keepdim=True) + torch.sum(self.embedding.weight.data.square(), dim=1, keepdim=False)
+                    d_no_grad = torch.sum(rest_NC.square(), dim=1, keepdim=True) + torch.sum(self.embedding.weight.data.square(), dim=1, keepdim=False).dtype(rest_NC.type())
                     d_no_grad.addmm_(rest_NC, self.embedding.weight.data.T, alpha=-2, beta=1)  # (B*h*w, vocab_size)
                     idx_N = torch.argmin(d_no_grad, dim=1)
                 
@@ -153,7 +153,8 @@ class VectorQuantizer2(nn.Module):
                 idx_N = torch.argmax(z_NC @ F.normalize(self.embedding.weight.data.T, dim=0), dim=1)
             else:
                 d_no_grad = torch.sum(z_NC.square(), dim=1, keepdim=True) + torch.sum(self.embedding.weight.data.square(), dim=1, keepdim=False)
-                d_no_grad.addmm_(z_NC, self.embedding.weight.data.T, alpha=-2, beta=1)  # (B*h*w, vocab_size)
+                d_no_grad = d_no_grad.to(z_NC.dtype)
+                d_no_grad.addmm_(z_NC, self.embedding.weight.data.T.to(z_NC.dtype), alpha=-2, beta=1)  # (B*h*w, vocab_size)
                 idx_N = torch.argmin(d_no_grad, dim=1)
             
             idx_Bhw = idx_N.view(B, ph, pw)

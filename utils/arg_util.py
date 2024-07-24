@@ -24,8 +24,8 @@ import dist
 
 
 class Args(Tap):
-    data_path: str = '/path/to/imagenet'
-    data_list: str = "subtrain_0.1.txt"
+    data_path: str = '/path/to/imagenet' # Changes required.
+    data_list: str = "subtrain_1.txt"
     val_data_list: str = "subtrain_1.txt"
     exp_name: str = 'text'
 
@@ -33,7 +33,7 @@ class Args(Tap):
     vfast: int = 0  # torch.compile VAE; =0: not compile; 1: compile with 'reduce-overhead'; 2: compile with 'max-autotune'
     # VAR
     tfast: int = 0  # torch.compile VAR; =0: not compile; 1: compile with 'reduce-overhead'; 2: compile with 'max-autotune'
-    depth: int = 30  # VAR depth {}
+    depth: int = 16  # VAR depth options {16, 20, 24, 30}
     # VAR initialization
     ini: float = -1  # -1: automated model parameter initialization
     hd: float = 0.02  # head.w *= hd
@@ -48,13 +48,13 @@ class Args(Tap):
     tclip: float = 2.  # <=0 for not using grad clip
     ls: float = 0.0  # label smooth
 
-    num_classes: int = 1
-    bs: int = 2  # global batch size
+    num_classes: int = 1000
+    bs: int = 32  # global batch size
     batch_size: int = 0  # [automatically set; don't specify this] batch size per GPU = round(args.bs / args.ac / dist.get_world_size() / 8) * 8
     glb_batch_size: int = 0  # [automatically set; don't specify this] global batch size = args.batch_size * dist.get_world_size()
     ac: int = 1  # gradient accumulation
 
-    ep: int = 250
+    ep: int = 25000
     val_every: int = 10
     wp: float = 0
     wp0: float = 0.005  # initial lr ratio at the begging of lr warm up

@@ -96,7 +96,7 @@ def build_everything(args: arg_util.Args):
                 )
             num_classes = args.num_classes
         except Exception as e:
-            print(e)
+            print(e, "\n Using ImageNet")
             num_classes, dataset_train, dataset_val = build_dataset(
                 args.data_path,
                 final_reso=args.data_load_reso,
@@ -437,9 +437,7 @@ def train_one_ep(ep: int, is_first_ep: bool, start_it: int, args: arg_util.Args,
 
         if isinstance(data, dict):
             inp = data["image"]
-            batch_size = inp.shape[0]
-            inp = (inp - 0.5) * 2.0
-            label = torch.tensor([0] * batch_size)  # 0 single class
+            label = data["label"]
         else:
             inp, label = data
         inp = inp.to(args.device, non_blocking=True)

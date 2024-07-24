@@ -10,7 +10,6 @@ from copy import deepcopy
 import cv2
 import numpy as np
 import pandas as pd
-import PIL
 import torch
 import torch.utils.data as data
 import torchvision.transforms as transforms
@@ -18,7 +17,11 @@ from torchvision.transforms import ToPILImage
 from PIL import Image, ImageDraw
 from torch.utils.data import DataLoader
 from transformers import CLIPImageProcessor
+from torchvision.transforms import InterpolationMode, transforms
 
+
+def normalize_01_into_pm1(x):  # normalize x from [0, 1] to [-1, 1] by (x*2) - 1
+    return x.add(x).add_(-1)
 
 def mask2bbox(mask):
     up = np.max(np.where(mask)[0])
@@ -48,7 +51,7 @@ def tensor_to_image(tensor, image_path):
     Returns:
     - None
     """
-    if debug_mode: 
+    if debug_mode:
         # Check the tensor dimensions. If it's a batch, take the first image
         if len(tensor.shape) == 4:
             tensor = tensor[0]
@@ -68,7 +71,13 @@ def tensor_to_image(tensor, image_path):
         img.save(image_path)
 
 
+def pil_loader(path):
+    with open(path, 'rb') as f:
+        img = Image.open(f).convert('RGB')
+    return img
+
 class CPDataset(data.Dataset):
+
     """
     Dataset for CP-VTON.
     """
@@ -87,7 +96,8 @@ class CPDataset(data.Dataset):
         self.crop_size = (self.fine_height, self.fine_width)
         self.toTensor = transforms.ToTensor()
         # self.transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
-        self.transform = transforms.Compose([transforms.ToTensor()])
+        # self.transform = transforms.Compose([transforms.ToTensor()])
+        self.transform = transforms.Compose([transforms.ToTensor(), normalize_01_into_pm1])
         # self.clip_normalize = transforms.Normalize((0.48145466, 0.4578275, 0.40821073), (0.26862954, 0.26130258, 0.27577711))
 
         # load data list
@@ -278,7 +288,7 @@ class CPDataset(data.Dataset):
         # Remove the warp image
         feat = warped_cloth * (1 - inpaint_mask) + im * inpaint_mask
         feat_with_pose = im * inpaint_mask
-        
+
         # down, up, left, right = mask2bbox(cm[key][0].numpy())
         # ref_image = c[key][:, down:up, left:right]
         ref_image = c[key]
@@ -372,16 +382,15 @@ class CPDataset(data.Dataset):
 
 class CPDatasetV2(CPDataset):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self,  *args, **kwargs):
         super().__init__(*args, **kwargs)
         # self.fine_height = 384
         # self.fine_width = 512
         # self.crop_size = (self.fine_height, self.fine_width)
-        self.transform = transforms.Compose([transforms.ToTensor()])
 
     def name(self):
         return "CPDatasetV2"
-    
+
     def __getitem__(self, index):
         im_name = self.im_names[index]
         im_name = "image/" + im_name
@@ -436,7 +445,8 @@ class CPDatasetV2(CPDataset):
 
         parse_map = torch.FloatTensor(20, self.fine_height, self.fine_width).zero_()
         parse_map = parse_map.scatter_(0, parse, 1.0)
-        new_parse_map = torch.FloatTensor(self.semantic_nc, self.fine_height, self.fine_width).zero_()
+        new_parse_map = torch.FloatTensor(self.semantic_nc, self.fine_height,
+                                          self.fine_width).zero_()
 
         for i in range(len(labels)):
             for label in labels[i][1]:
@@ -451,20 +461,24 @@ class CPDatasetV2(CPDataset):
         mask = torch.isin(parse_onehot[0], mask_id).numpy()
 
         kernel_size = int(5 * (self.fine_width / 256))
-        mask = cv2.dilate(mask.astype(np.uint8), kernel=np.ones((kernel_size, kernel_size)), iterations=3)
-        mask = cv2.erode(mask.astype(np.uint8), kernel=np.ones((kernel_size, kernel_size)), iterations=1)
+        mask = cv2.dilate(mask.astype(np.uint8),
+                          kernel=np.ones((kernel_size, kernel_size)),
+                          iterations=3)
+        mask = cv2.erode(mask.astype(np.uint8),
+                         kernel=np.ones((kernel_size, kernel_size)),
+                         iterations=1)
         mask = mask.astype(np.float32)
         inpaint_mask = 1 - self.toTensor(mask)
 
         ref_image = c[key]
         ref_image = self.transform(ref_image)
-        
+
         # load densepose image
         densepose_name = im_name.replace("image", "image-densepose").replace(".jpg", ".jpg")
         dp_im = Image.open(osp.join(self.data_path, densepose_name))
         dp_im = transforms.Resize(self.crop_size, interpolation=0)(dp_im)
         dp_im = self.transform(dp_im)
-        
+
         # load pose points
         pose_name = im_name.replace("image", "openpose_json").replace(".jpg", "_keypoints.json")
         with open(osp.join(self.data_path, pose_name), "r") as f:
@@ -493,19 +507,23 @@ class CPDatasetV2(CPDataset):
         # load image-parse-agnostic
         parse_name = im_name.replace("image", "image-parse-agnostic-v3.2").replace(".jpg", ".png")
         image_parse_agnostic = Image.open(osp.join(self.data_path, parse_name))
-        image_parse_agnostic = transforms.Resize(self.crop_size, interpolation=0)(image_parse_agnostic)
+        image_parse_agnostic = transforms.Resize(self.crop_size,
+                                                 interpolation=0)(image_parse_agnostic)
         parse_agnostic = torch.from_numpy(np.array(image_parse_agnostic)[None]).long()
         parse_agnostic_map = torch.FloatTensor(20, self.fine_height, self.fine_width).zero_()
         parse_agnostic_map = parse_agnostic_map.scatter_(0, parse_agnostic, 1.0)
-        new_parse_agnostic_map = torch.FloatTensor(self.semantic_nc, self.fine_height, self.fine_width).zero_()
+        new_parse_agnostic_map = torch.FloatTensor(self.semantic_nc, self.fine_height,
+                                                   self.fine_width).zero_()
         for i in range(len(labels)):
             for label in labels[i][1]:
                 new_parse_agnostic_map[i] += parse_agnostic_map[label]
         hands_mask = torch.sum(new_parse_agnostic_map[5:7], dim=0, keepdim=True)
         hands_mask = torch.clamp(hands_mask, min=0.0, max=1.0)
-        
+
         # load captions
-        caption_name = osp.join(self.data_path, "cloth", c_name[key]).replace("cloth", "cloth_caption").replace(".jpg", ".txt")
+        caption_name = osp.join(self.data_path, "cloth",
+                                c_name[key]).replace("cloth",
+                                                     "cloth_caption").replace(".jpg", ".txt")
         # Check if the file exists
         if os.path.exists(caption_name):
             with open(caption_name, 'r') as file:
@@ -514,7 +532,6 @@ class CPDatasetV2(CPDataset):
             print("File does not exist. ", caption_name)
             caption_string = "A cloth"  # Set caption_string to an empty string or handle the case when the file doesn't exist
 
-
         # get masked vton image by ootd
         c_img = np.array(c_img).astype(np.uint8)
         result = {
@@ -522,7 +539,7 @@ class CPDatasetV2(CPDataset):
             # "inpaint_image": inpaint_warp_cloth,
             "inpaint_image": im * inpaint_mask,
             # "inpaint_image": agnostic,
-            "inpaint_mask": 1-inpaint_mask,
+            "inpaint_mask": 1 - inpaint_mask,
             "mask": mask,
             "ref_imgs": ref_image,
             "file_name": self.im_names[index],
@@ -533,6 +550,7 @@ class CPDatasetV2(CPDataset):
             "cloth": self.clip_processor(images=im_pil, return_tensors="pt").pixel_values,
             "cloth_pure": ref_image,
             "image": im,
+            "label" : 834,
         }
         return result
 
@@ -640,7 +658,7 @@ class VitonHDTestDataset(data.Dataset):
     def __getitem__(self, index):
         c_name = self.c_names[index]
         im_name = self.im_names[index]
-        
+
         # load captions
         caption_name = osp.join(self.dataroot, self.phase, "cloth", c_name).replace("cloth", "cloth_caption").replace(".jpg", ".txt")
         # Check if the file exists
@@ -650,9 +668,9 @@ class VitonHDTestDataset(data.Dataset):
         else:
             print("File does not exist. ", caption_name)
             caption_string = "A cloth"  # Set caption_string to an empty string or handle the case when the file doesn't exist
-        
+
         cloth = Image.open(os.path.join(self.dataroot, self.phase, "cloth", c_name))
-        
+
         im_pil_big = Image.open(
             os.path.join(self.dataroot, self.phase, "image", im_name)
         ).resize((self.width,self.height))
@@ -663,12 +681,12 @@ class VitonHDTestDataset(data.Dataset):
         mask = mask[:1]
         mask = 1-mask
         im_mask = image * mask
- 
+
         pose_img = Image.open(
             os.path.join(self.dataroot, self.phase, "image-densepose", im_name)
         ).resize((self.width,self.height))
         pose_img = self.transform(pose_img)  # [-1,1]
- 
+
         result = {}
         result["c_name"] = c_name
         result["im_name"] = im_name
